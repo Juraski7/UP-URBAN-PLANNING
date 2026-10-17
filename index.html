@@ -516,17 +516,27 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                     <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
                     <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
                         <th class="p-2 text-left"><span class="inline-flex items-center gap-2">RECUOS MÍNIMOS
+                            <button type="button" class="info-btn no-print" data-info="info-recuos" aria-label="Informação: altura (h) e recuo" title="Informação">i</button>
                             <button type="button" class="btn-recuos no-print" title="Implantação: terreno com os recuos mínimos e as cotas"><i class="fa-solid fa-pen-ruler"></i></button></span></th>
                         <th class="p-2 text-center">MÁXIMA / REGRA</th>
                         <th class="p-2 text-center">PROJETO</th>
                         <th class="p-2 text-center">SITUAÇÃO</th>
                     </tr></thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr><td class="p-2 font-bold">ALTURA DA EDIFICAÇÃO <span class="text-[10px] font-normal text-slate-500">(h = altura + 3,00 m)</span></td>
+                            <td class="p-1.5"><input type="text" inputmode="decimal" id="inp-altura-edif" data-mask="metro" class="input-yellow"></td>
+                            <td class="p-2 text-center font-bold whitespace-pre-line" id="calc-altura-h">-</td>
+                            <td class="p-2 text-center text-slate-400">-</td></tr>
                         <tr><td class="p-2 font-bold">FRENTE</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-frente-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-frente-val">-</td><td class="p-2 text-center"><span id="st-rec-frente" class="status-badge-fixed"></span></td></tr>
                         <tr><td class="p-2 font-bold">LATERAL E FUNDOS</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-lateral-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-lat-val">-</td><td class="p-2 text-center"><span id="st-rec-lat" class="status-badge-fixed"></span></td></tr>
                         <tr><td class="p-2 font-bold">LATERAL E FUNDOS (COM OODC)</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-oodc-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-oodc-val">-</td><td class="p-2 text-center"><span id="st-rec-oodc" class="status-badge-fixed"></span></td></tr>
                     </tbody>
                 </table>
+                <div id="info-recuos" class="info-pop hidden" role="dialog" aria-label="Altura (h) e recuo">
+                    <p><b>Altura (h)</b> é a medida em metros, cotada do piso do pavimento térreo até a laje do piso do último pavimento, acrescida de 3 m (três metros);</p>
+                    <p><b>Recuo</b> é a distância mínima entre a projeção horizontal da edificação e a divisa do lote;</p>
+                    <p class="info-fonte">PDDUA e suas alterações, Art. 38, § 1º e Anexo 1 - Definições</p>
+                </div>
             </div>
 
             <!-- 9. OODC -->
