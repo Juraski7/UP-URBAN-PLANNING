@@ -1,0 +1,283 @@
+/* UP! Urban Planning — estilos de tela */
+body { font-family: 'Inter', sans-serif; background-color: #F4F6F5; color: #1E293B; font-variant-numeric: tabular-nums; }
+:root { --hdr: 80px; }
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+.table-fixed-std { table-layout: fixed; width: 100%; min-width: 600px; }
+.table-fixed-std thead th { letter-spacing: .04em; }
+.table-fixed-std tbody tr:hover > td { background-color: rgba(241,245,249,.75); }
+.tab-content > div:first-child { border-radius: .7rem .7rem 0 0; }
+[id^="row-"] { scroll-margin-top: calc(var(--hdr) + 60px); }
+.print-only { display: none; }
+
+/* Tabelas padrão (borda, fonte e cor ficam aqui, e não repetidas em cada célula) */
+.table-fixed-std { border-collapse: collapse; border: 1px solid #cbd5e1; font-size: .75rem; line-height: 1rem; color: #1e293b; }
+.table-fixed-std td { border: 1px solid #cbd5e1; }
+.table-fixed-std th { border: 1px solid #94a3b8; }
+
+/* Observação abaixo de um quadro (setObs em utils.js) */
+.obs-msg  { margin-top: .25rem; font-size: 11px; padding: .5rem; border-radius: .25rem; border: 1px solid; }
+.obs-ok   { color: #047857; font-weight: 600; font-style: italic; background: #ecfdf5; border-color: #a7f3d0; }
+.obs-fail { color: #b91c1c; font-weight: 700; background: #fef2f2; border-color: #fecaca; }
+
+/* Campos editáveis (suaves) */
+.input-yellow {
+    background-color: #FEF9C3 !important;
+    border: 1px solid #FACC15 !important;
+    color: #0F172A !important;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 6px;
+    padding: 3px 6px;
+    width: 100%;
+    transition: background-color .15s ease, box-shadow .15s ease;
+}
+.input-yellow:hover { background-color: #FEF08A !important; }
+.input-yellow:focus-visible, .input-yellow:focus {
+    background-color: #fff !important;
+    outline: 2px solid #2E7D32 !important;
+    box-shadow: 0 0 0 4px rgba(46,125,50,.18);
+}
+
+/* Campo preenchido com valor fora da lista (ex.: bairro inexistente) */
+.input-yellow.input-invalid { border-color: #ef4444 !important; background-color: #fee2e2 !important; }
+
+/* Select customizado sem escolha */
+.custom-select-label:empty::before { content: "SELECIONE"; color: #a16207; font-weight: 500; }
+
+/* Lista de sugestões do bairro (position: fixed — posicionada via JS) */
+.ac-list { position: fixed; z-index: 900; max-height: 15rem; overflow-y: auto; background: #fff; border: 2px solid #f59e0b;
+    border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,.18); font-size: 12px; }
+.ac-item { padding: 6px 10px; text-align: center; font-weight: 700; color: #1e293b; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+.ac-item:hover, .ac-item.ac-ativo { background: #fef9c3; }
+.ac-vazio { padding: 8px 10px; text-align: center; color: #64748b; font-style: italic; }
+
+/* Selos de status */
+.status-badge-fixed {
+    width: 120px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 4px 0; font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .03em; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    border: 1px solid transparent;
+}
+.st-ok   { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.st-fail { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.st-warn { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.st-na   { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }   /* sem dados para avaliar */
+
+/* Destaque ao atualizar valores calculados */
+@keyframes val-flash { from { background-color: #fde68a; } to { background-color: transparent; } }
+.flash { animation: val-flash .7s ease-out; }
+@keyframes flash-highlight { 0%, 100% { background-color: #FEF08A; transform: scale(1); } 50% { background-color: #FCA5A5; transform: scale(1.02); } }
+.row-highlight { animation: flash-highlight 1.2s ease-in-out 2; border: 2px solid #EF4444 !important; }
+
+/* Painel de resumo */
+.resumo-title { font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #1B2E24; margin-bottom: 8px; }
+.banner { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid; }
+.banner-ic { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; flex: none; }
+.banner-ok   { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; } .banner-ok .banner-ic   { background: #059669; }
+.banner-warn { background: #fffbeb; border-color: #fcd34d; color: #92400e; } .banner-warn .banner-ic { background: #d97706; }
+.banner-fail { background: #fef2f2; border-color: #fca5a5; color: #991b1b; } .banner-fail .banner-ic { background: #dc2626; }
+.banner-na   { background: #f8fafc; border-color: #cbd5e1; color: #334155; } .banner-na .banner-ic   { background: #64748b; }
+.banner-title { font-weight: 800; font-size: 14px; letter-spacing: .03em; }
+.banner-sub { font-size: 12px; opacity: .9; }
+.banner-sub:empty { display: none; }
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+@media (min-width: 640px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+.kpi { border: 1px solid #e2e8f0; border-top: 3px solid var(--c); border-radius: 10px; padding: 10px 12px; background: #fff; }
+.kpi-ok { --c: #059669; } .kpi-warn { --c: #d97706; } .kpi-fail { --c: #dc2626; } .kpi-na { --c: #94a3b8; }
+.kpi-top { display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; letter-spacing: .05em; color: #475569; }
+.kpi-ic { color: var(--c); }
+.kpi-val { font-size: 20px; font-weight: 800; color: #0f172a; line-height: 1.2; margin-top: 2px; }
+.kpi-lim { font-size: 10.5px; color: #64748b; margin-top: 1px; }
+.kpi-bar { height: 5px; border-radius: 99px; background: #e2e8f0; margin-top: 6px; overflow: hidden; }
+.kpi-bar i { display: block; height: 100%; background: var(--c); border-radius: 99px; }
+.pend-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 10px; }
+.pend-chip { display: inline-flex; align-items: center; justify-content: center; gap: 5px; text-align: center; line-height: 1.2;
+    font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 99px; border: 1px solid; cursor: pointer; transition: filter .15s, transform .15s; }
+.pend-chip:hover { filter: brightness(.95); transform: translateY(-1px); }
+
+/* Navegação por seções */
+#nav-chips { position: sticky; top: var(--hdr); z-index: 40; background: rgba(255,255,255,.96); backdrop-filter: blur(6px);
+    border-bottom: 1px solid #e2e8f0; display: flex; gap: 6px; overflow-x: auto; padding: 8px 12px; }
+.chip { flex: none; font-size: 11px; font-weight: 700; color: #334155; background: #f1f5f9; border: 1px solid #e2e8f0;
+    border-radius: 99px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.chip:hover { background: #e2e8f0; }
+.chip:first-child { margin-left: auto; } .chip:last-child { margin-right: auto; }  /* centraliza sem cortar a rolagem */
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 99px; background: #10b981; }
+.chip[data-s="warn"]::before { background: #f59e0b; }
+.chip[data-s="fail"]::before { background: #ef4444; }
+.chip[data-s="na"]::before { background: #94a3b8; }
+
+
+/* Categorias de uso x via: riscada = a via não comporta; pontilhada = depende de nota; destaque = categoria do projeto */
+.uso-fail { color: #b91c1c; text-decoration: line-through; cursor: help; }
+.uso-cond { color: #b45309; text-decoration: underline dotted; cursor: help; }
+.uso-sel  { font-weight: 800; background: #fef08a; border-radius: 3px; padding: 0 2px; }
+
+/* Aba CATEGORIA DE USO (categoria.js) */
+.cu-rotulo { display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: #334155; margin-bottom: 3px; }
+.cu-input { width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 8px; font-size: 13px; background: #fff; }
+.cu-input:focus { outline: 2px solid #2E7D32; outline-offset: 0; }
+.cu-btn { flex: 1; font-size: 11px; font-weight: 700; padding: 7px 8px; border-radius: 6px; border: 1px solid #CBD5E1; background: #fff; color: #334155; white-space: nowrap; }
+.cu-btn:hover { background: #F1F5F9; }
+.cu-btn-verde { background: #2E7D32; border-color: #2E7D32; color: #fff; }
+.cu-btn-verde:hover { background: #236327; }
+.cu-chip { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; border: 1px solid #CBD5E1; background: #fff; color: #334155; }
+.cu-chip:hover { background: #F1F5F9; }
+.cu-chip.ativo { background: #1B2E24; border-color: #1B2E24; color: #fff; }
+.cu-c-cat { width: 10%; } .cu-c-desc { width: 46%; } .cu-c-porte { width: 14%; } .cu-c-zona { width: 11%; } .cu-c-via { width: 11%; } .cu-c-acao { width: 8%; }
+.cu-desc { text-align: center; line-height: 1.4; }
+.cu-grupo { font-size: 9px; font-weight: 600; color: #64748B; line-height: 1.1; margin-top: 2px; }
+mark.cu-marca { background: #FDE047; color: inherit; padding: 0 1px; border-radius: 2px; }
+.cu-badge { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+.cu-via-ok { color: #059669; } .cu-via-fail { color: #DC2626; } .cu-via-cond { color: #D97706; }
+.cu-usar { font-size: 11px; font-weight: 800; color: #fff; background: #2E7D32; border-radius: 5px; padding: 4px 10px; }
+.cu-usar:hover { background: #236327; }
+.cu-exc { font-size: 10px; font-weight: 500; color: #64748B; line-height: 1.25; margin-top: 2px; }
+.cu-exc s { color: #94A3B8; }
+.cu-nota { font-weight: 700; color: #B45309; cursor: help; text-decoration: underline dotted; }
+.cu-usada { font-size: 10px; font-weight: 800; color: #047857; white-space: nowrap; }
+#cu-tabela tbody tr.cu-sel > td { background: #ECFDF5; }
+
+/* Aba VAGAS (vagas.js) */
+.vg-c-ativ { width: 34%; } .vg-c-num { width: 11%; } .vg-c-par { width: 31%; } .vg-c-ex { width: 12%; }
+#vg-tabela td { text-align: center; line-height: 1.4; }
+.vg-maior { display: block; font-size: 9.5px; font-weight: 600; color: #B45309; margin-top: 2px; }
+.vg-ou { display: block; font-size: 9.5px; font-weight: 800; color: #64748B; margin: 2px 0; }
+/* prancha de tipos de vaga (layout de VAGAS.jpg): cada célula tem a proporção da prancha original e a figura
+   se encaixa nela (object-fit), qualquer que seja o tamanho do arquivo */
+.vg-prancha { max-width: 760px; margin: 0 auto; border: 1.5px solid #0F172A; background: #fff; }
+.vg-linha { display: grid; }
+.vg-l1 { grid-template-columns: 422fr 422fr 438fr; aspect-ratio: 1282 / 670; }
+.vg-l2 { grid-template-columns: 784fr 501fr; aspect-ratio: 1285 / 603; }
+.vg-l3 { aspect-ratio: 1288 / 950; }
+.vg-linha + .vg-linha { border-top: 1.5px solid #0F172A; }
+.vg-linha > * + * { border-left: 1.5px solid #0F172A; }
+.vg-pilha { display: grid; grid-template-rows: 304fr 361fr; min-height: 0; }
+.vg-pilha > * + * { border-top: 1.5px solid #0F172A; }
+.vg-prancha figure { margin: 0; padding: 6px; min-width: 0; min-height: 0; overflow: hidden; }      /* folga: os PNGs não têm margem */
+.vg-prancha img { display: block; width: 100%; height: 100%; object-fit: contain; cursor: zoom-in; transition: opacity .15s; }
+.vg-prancha img:hover { opacity: .8; }
+/* figura ampliada */
+.vg-zoom { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; overflow: visible; }
+.vg-zoom::backdrop { background: rgba(15,23,42,.8); }
+.vg-zoom figure { margin: 0; background: #fff; border-radius: 10px; padding: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+.vg-zoom img { display: block; width: min(86vw, 1100px); height: 78vh; object-fit: contain; margin: 0 auto; }     /* amplia também as figuras pequenas */
+.vg-zoom figcaption { margin-top: 8px; text-align: center; font-size: 12px; font-weight: 700; color: #1B2E24; }
+.vg-zoom-btn { position: fixed; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.95); color: #1B2E24;
+    font-size: 18px; box-shadow: 0 4px 14px rgba(0,0,0,.3); transition: background-color .15s; }
+.vg-zoom-btn:hover { background: #DCFCE7; }
+.vg-zoom-fechar { top: 16px; right: 16px; }
+.vg-zoom-ant { left: 16px; top: 50%; transform: translateY(-50%); }
+.vg-zoom-prox { right: 16px; top: 50%; transform: translateY(-50%); }
+
+/* Zoneamento urbano: cada grupo (categorias, compatibilidade, índices, lotes, recuos) é uma tabela, com afastamento */
+.zu-grupo { margin-top: .75rem; }
+
+/* Zoneamento urbano: itens recuados sob o título de cada grupo */
+.zu-item { padding-left: 1.5rem !important; }
+
+/* Preparação da impressão: mapa na tela com a mesma largura/altura do papel */
+/* Visualizador: na tela ocupa toda a largura, com a MESMA altura do mapa impresso;
+   no papel a largura é a útil do A4 (185,5 mm). Ao exportar (classe print-prep), a tela assume
+   a largura do papel para o fundo de satélite carregar já no tamanho da impressão. */
+:root { --mapa-l: 185.5mm; --mapa-a: 146mm; }
+#map-container { height: var(--mapa-a); flex: none; }
+body.print-prep .map-block { width: var(--mapa-l); margin-left: auto; margin-right: auto; }
+/* prévia (botão "Layout de impressão"): legenda do PDF visível e botão destacado */
+body.print-prep #map-caption { display: block; font-size: 11px; color: #475569; padding: 4px 12px; border-top: 1px solid #CBD5E1; background: #F8FAFC; }
+#btn-previa-mapa.previa-ativa { background: #FEF08A; color: #92400E; border-color: #FACC15; }
+
+/* Rótulos das medições (medicao.js) */
+.medida { width: 0; height: 0; }
+.medida > span { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
+    font: 700 11px/1.2 Inter, sans-serif; color: #0F172A; background: rgba(255,255,255,.92);
+    border: 1.5px solid #64748B; border-radius: 4px; padding: 1px 5px; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.medida-lado > span { font-size: 10px; font-weight: 600; border-width: 1px; padding: 0 4px; }
+.medida-dist > span { border-color: #2563EB; color: #1E3A8A; transform: translate(-50%, -140%); }
+.medida-via  > span { border-color: #DC2626; color: #7F1D1D; transform: translate(-50%, -140%); }
+.medida-area > span { border-color: #2563EB; color: #1E3A8A; font-size: 12px; }
+.medida-terreno > span { border-color: #16A34A; color: #14532D; font-size: 12px; text-align: center; pointer-events: auto; }
+.medida-terreno button { display: block; margin: 3px auto 0; font: 700 9.5px Inter, sans-serif; color: #fff; background: #16A34A;
+    border: 0; border-radius: 3px; padding: 2px 6px; cursor: pointer; }
+.medida-terreno button:hover { background: #15803D; }
+/* campo preenchido pelo mapa: destaque sem mudar o tamanho (não desloca o mapa durante o desenho) */
+/* quadro de áreas: linhas livres (js/quadro_areas.js) */
+.input-yellow.qa-nome { text-align: left; font-weight: 600; text-transform: uppercase; }
+.input-yellow.qa-largo { width: 50%; display: block; margin: 0 auto; }
+/* tipologia: blocos, pavimentos e apartamentos na linha do título */
+.tp-params { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 6px 12px; }
+.tp-param { display: flex; align-items: center; gap: 6px; }
+.tp-param span { font-size: 10px; font-weight: 700; color: #334155; white-space: nowrap; }
+.input-yellow.tp-num { width: 56px; padding: 1px 4px; }
+.qa-remover { flex: none; width: 26px; height: 26px; border-radius: 6px; color: #94A3B8; transition: color .15s, background-color .15s; }
+.qa-remover:hover { color: #B91C1C; background: #FEE2E2; }
+.qa-acrescentar { font-size: 11px; font-weight: 700; color: #2E7D32; padding: 4px 10px; border: 1px dashed #86EFAC; border-radius: 6px; background: #F0FDF4; }
+.qa-acrescentar:hover { background: #DCFCE7; border-color: #2E7D32; }
+
+/* botão "i" (informação) e a janelinha com o texto */
+/* logo UP! (traz o nome): fundo claro para contrastar com o cabeçalho verde */
+.logo-up { display: inline-flex; align-items: center; background: #fff; border-radius: 10px; padding: 4px 10px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.logo-up img { height: 40px; width: auto; display: block; }
+@media (min-width: 640px) { .logo-up img { height: 48px; } }
+
+/* botão da implantação (tabela RECUOS MÍNIMOS) e a janela com o desenho */
+.btn-recuos { width: 26px; height: 22px; border-radius: 6px; background: #fff; color: #1B2E24; font-size: 12px; flex: none;
+    box-shadow: 0 0 0 2px rgba(46,125,50,.6); transition: background-color .15s, transform .15s; }
+.btn-recuos:hover { background: #DCFCE7; transform: scale(1.08); }
+.dlg-recuos { width: min(1080px, 96vw); max-height: 94vh; border: 0; border-radius: 12px; padding: 16px 18px; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+.dlg-recuos::backdrop { background: rgba(15,23,42,.55); }
+.rc-controles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
+.rc-check { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #334155; padding-bottom: 8px; }
+.rc-resumo { display: grid; gap: 4px; font-size: 12px; }
+.rc-resumo > div { display: grid; grid-template-columns: 210px 90px 1fr; gap: 10px; align-items: baseline; padding: 5px 8px; background: #F8FAFC; border-radius: 6px; border: 1px solid #E2E8F0; }
+.rc-resumo b { color: #1B2E24; }
+.rc-valor { font-weight: 800; color: #DC2626; }
+.rc-regra { color: #64748B; font-size: 11px; }
+.rc-desenho { margin-top: 10px; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; background: #fff; }
+.rc-desenho svg { display: block; width: 100%; height: auto; max-height: 64vh; }
+.obs-warn { color: #92400E; font-weight: 700; background: #FFFBEB; border-color: #FDE68A; }
+
+.info-btn { width: 17px; height: 17px; border-radius: 50%; background: #2563EB; color: #fff; font: italic 700 11px/17px Georgia, serif;
+    text-transform: none; box-shadow: 0 0 0 2px rgba(255,255,255,.85); cursor: pointer; flex: none; transition: background-color .15s; }
+.info-btn:hover { background: #1D4ED8; }
+.info-pop { position: fixed; z-index: 3000; width: min(420px, calc(100vw - 16px)); background: #fff; color: #1E293B; border: 1px solid #BFDBFE;
+    border-left: 4px solid #2563EB; border-radius: 8px; padding: 10px 12px; box-shadow: 0 12px 32px rgba(15,23,42,.25);
+    font-size: 12px; line-height: 1.45; text-align: left; text-transform: none; font-weight: 400; }
+.info-pop p + p { margin-top: 6px; }
+.info-pop:has(.info-img) { width: min(560px, calc(100vw - 16px)); }
+.info-img { display: block; width: 100%; height: auto; margin-top: 8px; border-radius: 6px; background: #fff; }
+.info-pop .info-fonte { font-size: 10.5px; font-style: italic; color: #475569; border-top: 1px solid #E2E8F0; padding-top: 6px; }
+
+.input-yellow.campo-preenchido { outline: 3px solid #16A34A !important; outline-offset: 1px; background-color: #DCFCE7 !important; }
+/* barra de ferramentas: grupo MEDIR (azul, só mede) e grupo TERRENO (verde, preenche campos) */
+.medir-bar { display: flex; flex-direction: column; gap: 6px; }
+.medir-bar .medir-grupo { margin: 0; }
+.medir-titulo { display: block; font: 800 7.5px/1 Inter, sans-serif; letter-spacing: .04em; text-align: center; padding: 3px 0 2px;
+    color: #fff; border-radius: 2px 2px 0 0; }
+.medir-simples .medir-titulo { background: #2563EB; }
+.medir-terreno .medir-titulo { background: #16A34A; }
+.medir-simples a { color: #1D4ED8; }
+.medir-terreno a { color: #15803D; }
+.medir-acoes a { color: #475569; }
+.medir-bar a { font-size: 13px; }
+/* lados do terreno: frente x lateral/fundos */
+.medida-frente > span { border-color: #EA580C; color: #9A3412; background: #FFF7ED; font-weight: 800; }
+.lados-resumo { background: rgba(255,255,255,.95); border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 10px;
+    font: 600 11px/1.3 Inter, sans-serif; color: #334155; box-shadow: 0 1px 4px rgba(0,0,0,.2); margin-bottom: 26px !important; }
+.lados-resumo b { color: #9A3412; }
+.lados-pendente { color: #B45309; font-style: italic; }
+.lado-alvo { cursor: pointer; }
+/* janela "desenhar por descrição" (desenho.js) */
+.dlg-desenho { width: min(620px, 94vw); border: 0; border-radius: 12px; padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+.dlg-desenho::backdrop { background: rgba(15,23,42,.45); }
+/* medidas que podem ser digitadas (clique no rótulo) */
+.medida-editavel > span { pointer-events: auto; cursor: text; }
+.medida-editavel > span:hover { background: #FEF9C3; border-color: #CA8A04; }
+/* modo apagar: cursor de borracha sobre as feições */
+.modo-apagar, .modo-apagar .leaflet-interactive, .modo-apagar .medida-editavel > span { cursor: not-allowed !important; }
+.modo-apagar .leaflet-interactive:hover { stroke: #DC2626 !important; }
+.medir-bar a.ativo { background: #FEF08A; color: #92400E; }

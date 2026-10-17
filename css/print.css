@@ -1,0 +1,123 @@
+/* UP! Urban Planning — impressão A4 */
+/* ======================= IMPRESSÃO A4 ======================= */
+@page {
+    size: A4 portrait;
+    margin: 13mm 9mm 12mm 15.5mm;   /* esquerda maior: grampo / encadernação */
+    @top-left     { content: "UP! Urban Planning \2022  Relatório de Viabilidade Urbanística"; font: 600 7pt Inter, sans-serif; color: #64748B; vertical-align: bottom; padding-bottom: 2mm; }
+    @bottom-left  { content: "JSK Engenharia \2022  UP! Urban Planning v3.8"; font: 600 7pt Inter, sans-serif; color: #64748B; vertical-align: top; padding-top: 2mm; }
+    @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 700 7pt Inter, sans-serif; color: #1B2E24; vertical-align: top; padding-top: 2mm; }
+}
+@page :first { @top-left { content: none; } }
+
+@media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    html, body { background: #fff !important; font-size: 9pt; }
+    .no-print, header, footer { display: none !important; }
+    .print-only { display: block !important; }
+    main { max-width: none !important; padding: 0 !important; margin: 0 !important; display: block !important; }
+    .space-y-2 > * + *, .space-y-3 > * + *, .space-y-6 > * + *, .space-y-8 > * + * { margin-top: 1.8mm !important; }
+    main > * + * { margin-top: 2mm !important; }
+    .flash, .row-highlight { animation: none !important; }
+
+    /* imprime apenas a aba ativa */
+    .tab-content.hidden { display: none !important; }
+    .tab-content:not(.hidden) { display: block !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; background: #fff !important; }
+    .tab-content > div:first-child { padding: 1.2mm 3mm !important; border-radius: 1.5mm !important; break-after: avoid; }
+    .tab-content > div:first-child h2 { font-size: 9pt !important; }
+    .tab-content > div:first-child span { display: none !important; }
+    .tab-content > div.p-4 { padding: 0 !important; margin-top: 1.8mm !important; }
+    .tab-content > #painel-resumo { margin: 1.8mm 0 0 !important; }
+
+    /* tabelas (compactas para o relatório caber em 2 páginas por aba) */
+    .table-fixed-std { min-width: 0 !important; width: 100% !important; font-size: 7.3pt !important; }
+    .table-fixed-std th, .table-fixed-std td { padding: .5mm 1.6mm !important; line-height: 1.12 !important; }
+    .table-fixed-std th { font-size: 6.9pt !important; }
+    .table-fixed-std td.pl-6 { padding-left: 5mm !important; }              /* linhas recuadas abaixo de um título (quadro de áreas, vagas) */
+    .table-fixed-std td > .grid > div { padding: .5mm 1.6mm !important; }
+    /* Imóvel, pág. 2 (zoneamentos): sobra espaço no papel, então tabelas um pouco mais folgadas */
+    .print-page-2 .table-fixed-std { font-size: 7.5pt !important; }
+    .print-page-2 .table-fixed-std th { font-size: 7pt !important; }
+    .print-page-2 .table-fixed-std th, .print-page-2 .table-fixed-std td,
+    .print-page-2 .table-fixed-std td > .grid > div { padding-top: .6mm !important; padding-bottom: .6mm !important; }
+    .print-page-2 .print-obs { font-size: 6.8pt !important; }
+    #txt-obs-to, #txt-obs-uhs, #txt-obs-aptos { margin-top: .8mm !important; padding: .8mm 2mm !important; font-size: 6.8pt !important; }
+
+    /* Coluna da esquerda +10 mm (somente impressão). 10 mm = 5.3908% da largura útil (210 - 15,5 - 9 = 185,5 mm);
+       a diferença é retirada das demais colunas na mesma proporção, mantendo a soma em 100% */
+    colgroup col:first-child { width: 47.3908% !important; }                                             /* tela: 42% */
+    colgroup col:nth-child(2):nth-last-child(1) { width: 52.6092% !important; }                          /* 2 colunas: 58% */
+    colgroup col:nth-child(2):nth-last-child(2), colgroup col:nth-child(3):nth-last-child(1) { width: 26.3046% !important; }   /* 3 colunas: 29% */
+    colgroup col:nth-child(2):nth-last-child(3), colgroup col:nth-child(3):nth-last-child(2) { width: 18.1411% !important; }   /* 4 colunas: 20% */
+    colgroup col:nth-child(4):nth-last-child(1) { width: 16.327% !important; }                         /* 4 colunas: 18% */
+    .table-fixed-std tbody tr:hover > td { background-color: inherit; }
+    .overflow-x-auto { overflow: visible !important; width: 100% !important; }
+    ::-webkit-scrollbar { display: none !important; }
+    [id^="row-"], .overflow-x-auto, table, tr, #painel-resumo, .kpi, .map-block, #print-sign { break-inside: avoid !important; }
+    /* tabelas longas (aba CATEGORIA DE USO) podem quebrar entre páginas: só as linhas ficam inteiras e o cabeçalho se repete */
+    #tab-categoria .overflow-x-auto, #cu-tabela, #tab-vagas .overflow-x-auto, #vg-tabela { break-inside: auto !important; }
+    thead { display: table-header-group; }
+
+    /* campos viram texto */
+    .input-yellow { background: transparent !important; border: 0 !important; box-shadow: none !important; outline: 0 !important;
+        padding: 0 !important; font-size: inherit !important; font-weight: 700; color: #0F172A !important; text-align: center !important; width: 100% !important; }
+    .input-yellow::placeholder { color: transparent; }
+    .custom-select-container i { display: none !important; }
+    .custom-select-label:empty::before { content: none; }
+    .input-yellow.input-invalid { background: transparent !important; border: 0 !important; }
+    .tp-params { flex-wrap: nowrap !important; gap: 1.5mm !important; justify-content: space-between !important; }
+    .tp-param { gap: 1mm !important; }
+    .tp-param span { font-size: 6.2pt !important; }
+    .input-yellow.tp-num { width: 7mm !important; text-align: left !important; }
+    .input-yellow.qa-largo { width: 100% !important; }
+    .qa-vazia { display: none !important; }
+    .info-pop { display: none !important; }
+    .vg-figuras { break-inside: avoid; }
+    .vg-prancha { max-width: 128mm !important; border-width: .3mm !important; }      /* prancha de vagas: cabe numa página */                                  /* quadro de áreas: linhas OUTRAS sem área */
+    .input-yellow.qa-nome { text-align: left !important; font-weight: 400; text-transform: uppercase; }
+
+    .zu-item { padding-left: 5mm !important; }
+    .zu-grupo { margin-top: 1.8mm !important; }
+    .status-badge-fixed { width: 25mm !important; font-size: 6.5pt !important; padding: .2mm 0 !important; line-height: 1.15 !important; box-shadow: none !important; }
+
+    /* cabeçalho institucional */
+    #print-head { margin-bottom: 2mm; }
+    .ph-top { display: flex; align-items: center; gap: 4mm; border-bottom: 1.2mm solid #2E7D32; padding-bottom: 2mm; }
+    .ph-top img { height: 11mm; width: auto; object-fit: contain; }
+    .ph-title { flex: 1; }
+    .ph-kicker { font-size: 7.5pt; font-weight: 700; letter-spacing: .12em; color: #2E7D32; }
+    .ph-h1 { font-size: 12pt; font-weight: 800; color: #1B2E24; line-height: 1.15; }
+    .ph-date { text-align: right; font-size: 7.5pt; color: #64748B; }
+    .ph-date b { display: block; font-size: 9pt; color: #1B2E24; }
+    .ph-grid { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 3mm; margin-top: 1.8mm; }
+    .ph-grid span { display: block; font-size: 6.8pt; font-weight: 700; letter-spacing: .08em; color: #64748B; }
+    .ph-grid b { font-size: 8.5pt; color: #0F172A; }
+
+    /* resumo */
+    #painel-resumo { padding: 2mm 3mm !important; border: .3mm solid #94A3B8 !important; border-radius: 2mm !important; box-shadow: none !important; }
+    .resumo-title { font-size: 7.5pt; margin-bottom: 1mm; }
+    .banner { padding: 1.3mm 3mm; gap: 3mm; }
+    .banner-ic { width: 6.5mm; height: 6.5mm; font-size: 10pt; }
+    .banner-title { font-size: 9pt; } .banner-sub { font-size: 7.3pt; }
+    .kpi-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 1.5mm; margin-top: 1.8mm; }
+    .kpi { padding: 1.2mm 2mm; border-radius: 1.5mm; }
+    .kpi-top { font-size: 6.2pt; } .kpi-val { font-size: 10pt; } .kpi-lim { font-size: 6.4pt; }
+    .kpi-bar { height: 1mm; margin-top: .8mm; }
+    .pend-list { gap: 1mm; margin-top: 1.5mm; } .pend-chip { font-size: 6.5pt; padding: .3mm 2mm; cursor: default; }
+
+    /* mapa */
+    /* Imóvel: pág. 1 = dados básicos + visualizador (mapa ocupa todo o espaço restante); pág. 2 = demais quadros */
+    .print-page-1 > * + * { margin-top: 1.8mm !important; }
+    .print-page-2 { break-before: page; }
+    .map-block { width: var(--mapa-l) !important; border-radius: 1.5mm !important; }
+    .map-block > div:first-child { padding: 1.5mm 3mm !important; }
+    .map-block h2 { font-size: 8.5pt !important; }
+    #map-container { min-height: 0 !important; }
+    .leaflet-control-layers, .leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
+    #map-caption { font-size: 7pt; color: #475569; padding: 1mm 3mm; border-top: .3mm solid #CBD5E1; background: #F8FAFC; }
+
+    /* notas e assinaturas */
+    .print-obs { padding: 1.5mm 2.5mm !important; font-size: 6.6pt !important; line-height: 1.25 !important; }
+    .print-obs > * + * { margin-top: 1.2mm !important; }
+    .print-obs .space-y-1 > * + * { margin-top: .3mm !important; }
+    #print-sign { margin-top: 2mm; }
+    .print-aviso { margin-top: 1mm; padding-top: 1.5mm; border-top: .3mm solid #CBD5E1; font-size: 7.5pt; color: #475569; text-align: center; }
