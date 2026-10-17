@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-[#F4F6F5]">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UP!</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.css">
+
+<!-- Tailwind via CDN (para produção, compile o CSS com a CLI do Tailwind) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
+</script>
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/print.css">
+</head>
+
+<body class="min-h-full flex flex-col antialiased">
+
+<!-- CABEÇALHO -->
+<header id="app-header" class="no-print bg-gradient-to-r from-[#1B2E24] to-[#264A33] text-white shadow-md sticky top-0 z-[1000] border-b border-[#2E7D32]/40">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-20 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <span class="logo-up"><img src="img/UP.png" alt="UP! Urban Planning"></span>
+            <h1 class="sr-only">UP! Urban Planning</h1>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 sm:space-x-3 w-full sm:w-auto">
+            <span id="jsk-status" class="hidden xl:inline text-[10px] text-slate-300 max-w-[200px] truncate text-right"></span>
+            <button id="btn-abrir" type="button" title="Abrir um projeto salvo (.jsk)"
+                    class="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-lg flex items-center space-x-1.5 transition border border-white/20">
+                <i class="fa-solid fa-folder-open"></i><span class="hidden sm:inline">Abrir</span>
+            </button>
+            <button id="btn-salvar" type="button" title="Salvar projeto (Ctrl+S) • Shift+clique = Salvar como..."
+                    class="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-lg flex items-center space-x-1.5 transition border border-white/20">
+                <i class="fa-solid fa-floppy-disk"></i><span class="hidden sm:inline">Salvar</span>
+            </button>
+            <input type="file" id="jsk-file-input" accept=".jsk" class="hidden">
+            <div class="relative">
+                <button id="btn-pendencias" type="button"
+                        class="bg-[#8D4222] hover:bg-[#70331A] text-white text-xs font-bold px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-lg flex items-center space-x-1.5 transition shadow-md border border-amber-600/30">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-300 animate-pulse"></i>
+                    <span>PENDÊNCIAS</span>
+                    <span id="badge-pendencias-count" class="bg-amber-300 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-0.5">0</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
+                </button>
+                <div id="dropdown-pendencias" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden text-xs text-slate-800">
+                    <div class="bg-[#1B2E24] text-white p-3 font-bold flex items-center justify-between border-b border-slate-700">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-amber-400"></i>Diagnosticados Não Conformes</span>
+                        <span class="text-[10px] text-slate-300 font-normal">Clique para ir ao campo</span>
+                    </div>
+                    <div id="list-pendencias-items" class="max-h-72 overflow-y-auto divide-y divide-slate-100"></div>
+                </div>
+            </div>
+
+            <button id="btn-print" type="button" class="bg-[#2E7D32] hover:bg-[#236327] text-white text-xs font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg flex items-center space-x-2 transition shadow-md border border-emerald-500/30">
+                <i class="fa-solid fa-file-pdf"></i>
+                <span class="hidden sm:inline">Exportar Relatório</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 sm:space-y-8">
+
+    <!-- CABEÇALHO INSTITUCIONAL (somente impressão) -->
+    <div id="print-head" class="print-only">
+        <div class="ph-top">
+            <img src="img/UP.png" alt="UP! Urban Planning">
+            <div class="ph-title">
+                <div class="ph-kicker">JSK ENGENHARIA</div>
+                <div class="ph-h1">RELATÓRIO DE VIABILIDADE URBANÍSTICA</div>
+            </div>
+            <div class="ph-date">Emissão<b id="ph-emissao">-</b></div>
+        </div>
+        <div class="ph-grid">
+            <div><span>PROJETO</span><b id="ph-projeto">-</b></div>
+            <div><span>INSCRIÇÃO IMOBILIÁRIA</span><b id="ph-inscricao">-</b></div>
+            <div><span>ENDEREÇO</span><b id="ph-endereco">-</b></div>
+        </div>
+    </div>
+
+    <!-- ABAS -->
+    <div class="no-print border-b border-slate-300 mb-2 sm:mb-6 bg-white rounded-t-xl shadow-sm px-4 overflow-hidden">
+        <nav class="-mb-px flex space-x-6 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
+            <button type="button" data-tab="tab-basico" id="btn-tab-basico" class="tab-btn border-[#2E7D32] text-[#2E7D32] whitespace-nowrap py-4 px-1 border-b-2 font-bold text-xs sm:text-sm transition-colors">
+                <i class="fa-solid fa-map-location-dot mr-2"></i>Imóvel
+            </button>
+            <button type="button" data-tab="tab-empreendimento" id="btn-tab-empreendimento" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                <i class="fa-solid fa-building mr-2"></i>Empreendimento
+            </button>
+            <button type="button" data-tab="tab-categoria" id="btn-tab-categoria" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                <i class="fa-solid fa-list-check mr-2"></i>Categoria de Uso
+            </button>
+            <button type="button" data-tab="tab-vagas" id="btn-tab-vagas" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                <i class="fa-solid fa-square-parking mr-2"></i>Vagas
+            </button>
+        </nav>
+    </div>
+
+    <!-- SEÇÃO 1: IMÓVEL -->
+    <section id="tab-basico" class="tab-content bg-white rounded-xl shadow-sm border border-slate-200">
+        <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
+            <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-[#2E7D32]"></i>CARACTERÍSTICAS BÁSICAS DO IMÓVEL
+            </h2>
+            <span class="text-[10px] sm:text-xs bg-white/10 text-slate-200 px-2 py-0.5 rounded font-mono">ENQUADRAMENTO LEGAL</span>
+        </div>
+
+        <div class="p-4 sm:p-6 mt-4 space-y-3">
+            <div class="print-page-1 space-y-3">
+
+                <div class="overflow-x-auto">
+                    <table class="table-fixed-std">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <thead>
+                            <tr class="bg-[#2E7D32] text-white font-bold uppercase">
+                                <th class="p-1.5 text-left">CARACTERÍSTICAS BÁSICAS DO IMÓVEL</th>
+                                <th class="p-1.5 text-center">DADOS DE ENTRADA DO PROJETO</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-slate-50/50">
+                            <tr><td class="p-1.5 font-bold bg-white">PROJETO</td><td class="p-1"><input type="text" id="inp-projeto" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">INSCRIÇÃO IMOBILIÁRIA</td><td class="p-1"><input type="text" inputmode="numeric" id="inp-inscricao" data-fmt="inscricao" maxlength="15" placeholder="00.00.000.000-0" class="input-yellow"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">MATRÍCULA / CRI</td><td class="p-1"><input type="text" id="inp-matricula" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">ENDEREÇO</td><td class="p-1"><input type="text" id="inp-endereco" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">QUADRA E LOTE</td><td class="p-1"><input type="text" id="inp-quadra-lote" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">BAIRRO</td><td class="p-1"><input type="text" id="inp-bairro" placeholder="DIGITE PARA BUSCAR O BAIRRO" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-bairro" class="input-yellow uppercase"><ul id="lista-bairro" role="listbox" class="ac-list no-print hidden"></ul></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">PROPRIETÁRIO</td><td class="p-1"><input type="text" id="inp-proprietario" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">ÁREA DO LOTE</td><td class="p-1"><input type="text" inputmode="decimal" id="inp-area-lote" data-mask="area" class="input-yellow font-bold"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">VALOR DO IMÓVEL (IPTU)</td><td class="p-1"><input type="text" inputmode="decimal" id="inp-iptu" data-mask="iptu" class="input-yellow font-bold"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">VALOR DO IMÓVEL (VENDA)</td><td class="p-1"><input type="text" inputmode="decimal" id="inp-venda" data-mask="moeda" class="input-yellow font-bold"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">CONDIÇÕES DO NEGÓCIO</td><td class="p-1"><input type="text" id="inp-condicoes-negocio" class="input-yellow uppercase font-bold"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">CATEGORIA DE USO</td><td class="p-1"><input type="text" id="inp-categoria-uso" placeholder="DIGITE PARA BUSCAR (EX.: R3, RESIDENCIAL)" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-categoria" class="input-yellow uppercase"><ul id="lista-categoria" role="listbox" class="ac-list no-print hidden"></ul></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">FACHADA ATIVA?</td><td class="p-1"><div data-select="inp-fachada-ativa"></div></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">LARGURA DA VIA (MURO A MURO)</td><td class="p-1"><input type="text" inputmode="decimal" id="inp-faixa-dominio" data-mask="metro" class="input-yellow font-bold"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- VISUALIZADOR -->
+                <div class="border border-emerald-800 rounded-xl overflow-hidden shadow-sm flex flex-col map-block">
+                    <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
+                        <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-[#2E7D32]"></i>VISUALIZADOR
+                        </h2>
+                        <div class="no-print flex items-center gap-2">
+                        <button type="button" id="btn-previa-mapa" aria-pressed="false" title="Mostra o mapa no mesmo tamanho e enquadramento que vai para a impressão"
+                                class="bg-white/10 hover:bg-white/20 text-white text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded transition shadow-sm border border-white/20 flex items-center gap-1.5">
+                            <i class="fa-solid fa-print"></i><span>Layout de impressão</span>
+                        </button>
+                        <label for="map-file-upload" class="no-print bg-[#2E7D32] hover:bg-[#236327] cursor-pointer text-white text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded transition shadow-sm border border-emerald-500/30 flex items-center gap-1.5">
+                            <i class="fa-solid fa-upload"></i> Carregar KML / KMZ / ZIP (SHP)
+                        </label>
+                        </div>
+                        <input type="file" id="map-file-upload" accept=".kml,.kmz,.zip" class="hidden">
+                    </div>
+                    <div id="map-container" class="w-full relative bg-slate-100 z-10"></div>
+                    <div id="map-caption" class="print-only"></div>
+                </div>
+            </div>
+
+            <div class="print-page-2 space-y-3">
+                <div class="overflow-x-auto">
+                    <table class="table-fixed-std">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <thead><tr class="bg-[#2E7D32] text-white font-bold uppercase"><th colspan="2" class="p-2 text-left">ZONEAMENTO AMBIENTAL</th></tr></thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-slate-50"><td class="p-2.5 font-bold">ZONA AMBIENTAL (ZA)</td><td class="p-2.5 font-bold text-center text-[#1B2E24]" id="txt-za">-</td></tr>
+                            <tr><td class="p-2.5 font-bold">TAXA DE PERMEABILIDADE MÍNIMA (%)</td><td class="p-2.5 font-bold text-center text-[#2E7D32]" id="txt-taxa-perm-min">-</td></tr>
+                            <tr><td class="p-2.5 font-bold">TAXA DE RELEVÂNCIA AMBIENTAL (TRA)</td><td class="p-2.5 font-bold text-center text-[#1B2E24]" id="txt-tra-min">-</td></tr>
+                            <tr><td class="p-2.5 font-bold">FATOR ALFA (α)</td><td class="p-2.5 font-bold text-center text-[#1B2E24]" id="txt-fator-alfa">-</td></tr>
+                            <tr><td class="p-2.5 font-bold">FATOR BETA (β)</td><td class="p-2.5 font-bold text-center text-[#1B2E24]" id="txt-fator-beta">-</td></tr>
+                            <tr class="bg-slate-50"><td colspan="2" class="p-2.5 text-center font-bold text-[#1B2E24]">TRA = V<sup>α</sup> × D<sup>β</sup> &nbsp;|&nbsp; V: INDICADOR DE VEGETAÇÃO E D: INDICADOR DE DRENAGEM</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table-fixed-std">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <thead><tr class="bg-[#2E7D32] text-white font-bold uppercase"><th colspan="2" class="p-2 text-left">ZONEAMENTO URBANO</th></tr></thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="2" class="p-1.5 text-[#1B2E24]">ENQUADRAMENTO</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">MACROZONA URBANA (MZ)</td><td class="p-2 text-center font-bold text-[#1B2E24]" id="txt-macrozona">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">ZONA URBANA (Z)</td><td class="p-2 text-center font-bold text-[#1B2E24]" id="txt-zona-urbana">-</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="table-fixed-std zu-grupo">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="2" class="p-1.5 text-[#1B2E24]">CATEGORIAS DE USO</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">RESIDENCIAL</td><td class="p-2 text-center" id="txt-uso-residencial">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">COMÉRCIO VAREJISTA</td><td class="p-2 text-center" id="txt-uso-varejista">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">COMÉRCIO ATACADISTA</td><td class="p-2 text-center" id="txt-uso-atacadista">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">SERVIÇOS</td><td class="p-2 text-center" id="txt-uso-servicos">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">INDUSTRIAL</td><td class="p-2 text-center" id="txt-uso-industrial">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">LOTEAMENTO</td><td class="p-2 text-center" id="txt-uso-loteamento">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">ESPECIAL</td><td class="p-2 text-center" id="txt-uso-especial">-</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="table-fixed-std zu-grupo">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr id="row-comp-locacional" class="bg-slate-100 font-bold"><td colspan="2" class="p-1.5 text-[#1B2E24]">COMPATIBILIDADE LOCACIONAL</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">CATEGORIA DO EMPREENDIMENTO</td><td class="p-0"><div class="grid grid-cols-2 h-full"><div class="p-2 text-center font-bold text-[#1B2E24] border-r border-slate-300 flex items-center justify-center" id="txt-cl-categoria">-</div><div class="p-2 text-center flex items-center justify-center"><span id="st-cl-zona" class="status-badge-fixed"></span></div></div></td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">VIA MÍNIMA EXIGIDA</td><td class="p-0"><div class="grid grid-cols-2 h-full"><div class="p-2 text-center font-bold text-[#1B2E24] border-r border-slate-300 flex items-center justify-center" id="txt-cl-via">-</div><div class="p-2 text-center flex items-center justify-center"><span id="st-cl-via" class="status-badge-fixed"></span></div></div></td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">INFRAESTRUTURA EXIGIDA</td><td class="p-2 text-center" id="txt-cl-infra">-</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="table-fixed-std zu-grupo">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="2" class="p-1.5 text-[#1B2E24]">ÍNDICES E INSTRUMENTOS URBANÍSTICOS</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">LIMITE UHs</td><td class="p-2 text-center font-bold text-emerald-800 bg-emerald-50" id="txt-limite-unidades-max">ATÉ 250 UHs</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">TAXA DE OCUPAÇÃO (TO)</td><td class="p-2 text-center font-bold whitespace-pre-line" id="txt-to-limite-pct">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">COEFICIENTE DE APROVEITAMENTO MÍNIMO (CAMin)</td><td class="p-2 text-center" id="txt-camin">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">COEFICIENTE DE APROVEITAMENTO BÁSICO (CABas)</td><td class="p-2 text-center font-bold text-emerald-700" id="txt-cabas">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">COEFICIENTE DE APROVEITAMENTO MÁXIMO (CAMax)</td><td class="p-2 text-center font-bold text-amber-700" id="txt-camax">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">OUTORGA ONEROSA / TRANSFERÊNCIA DO DIREITO DE CONSTRUIR</td><td class="p-2 text-center font-bold" id="txt-oodc-coef">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">ÍNDICE DE ELEVAÇÃO (SEM / COM OODC)</td><td class="p-2 text-center" id="txt-ie-limites">-</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="table-fixed-std zu-grupo">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="2" class="p-1.5 text-[#1B2E24]">LOTES MÍNIMOS</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">ÁREA MÍNIMA DO LOTE</td><td class="p-2 text-center font-bold" id="txt-lote-area">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">TESTADA MÍNIMA DE ESQUINA</td><td class="p-2 text-center" id="txt-lote-testada-esquina">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">TESTADA MÍNIMA DE MEIO DE QUADRA</td><td class="p-2 text-center" id="txt-lote-testada-meio">-</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="table-fixed-std zu-grupo">
+                        <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="2" class="p-1.5 text-[#1B2E24]"><span class="inline-flex items-center gap-2">RECUOS MÍNIMOS
+                                <button type="button" class="btn-recuos no-print" title="Implantação: terreno com os recuos mínimos e as cotas"><i class="fa-solid fa-pen-ruler"></i></button></span></td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">RECUO FRENTE</td><td class="p-2 text-center whitespace-pre-line" id="txt-recuo-frente">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">RECUOS LATERAIS E FUNDOS</td><td class="p-2 text-center whitespace-pre-line" id="txt-recuo-lateral">-</td></tr>
+                            <tr><td class="p-2 zu-item font-semibold">RECUOS LATERAIS E FUNDOS (OODC/TDC)</td><td class="p-2 text-center whitespace-pre-line" id="txt-recuo-oodc">-</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="box-observacoes" class="hidden text-[11px] text-slate-500 bg-slate-100 p-3 rounded-lg border border-slate-200 space-y-2 [&>div:empty]:hidden print-obs">
+                    <div id="obs-categorias" class="space-y-1"></div>
+                    <div id="obs-comp-locacional" class="space-y-1"></div>
+                    <div id="obs-indices" class="space-y-1"></div>
+                    <div id="obs-recuos" class="space-y-1"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEÇÃO 2: EMPREENDIMENTO -->
+    <section id="tab-empreendimento" class="tab-content hidden bg-white rounded-xl shadow-sm border border-slate-200">
+        <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
+            <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-building text-[#2E7D32]"></i>CARACTERÍSTICAS DO EMPREENDIMENTO
+            </h2>
+            <span class="text-[10px] sm:text-xs bg-white/10 text-slate-200 px-2 py-0.5 rounded font-mono">PROJETO DE ARQUITETURA</span>
+        </div>
+
+        <!-- PAINEL DE RESUMO -->
+        <section id="painel-resumo" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 mx-4 sm:mx-6 mt-4 sm:mt-6">
+            <h2 class="resumo-title">RESUMO DA ANÁLISE</h2>
+            <div id="resumo-banner" class="banner banner-ok">
+                <span id="resumo-banner-ic" class="banner-ic">✓</span>
+                <div><div id="resumo-banner-title" class="banner-title"></div><div id="resumo-banner-sub" class="banner-sub"></div></div>
+            </div>
+            <div id="resumo-kpis" class="kpi-grid"></div>
+            <div id="resumo-pend" class="pend-list"></div>
+        </section>
+
+        <nav id="nav-chips" class="no-print" aria-label="Seções do empreendimento">
+            <button type="button" class="chip" data-chip="row-unidades-habitacionais" data-s="ok">UHs</button>
+            <button type="button" class="chip" data-chip="row-quadro-areas" data-s="ok">Áreas</button>
+            <button type="button" class="chip" data-chip="row-lazer" data-s="ok">Lazer</button>
+            <button type="button" class="chip" data-chip="row-permeabilidade" data-s="ok">Permeabilidade</button>
+            <button type="button" class="chip" data-chip="row-taxa-ocupacao" data-s="ok">Ocupação</button>
+            <button type="button" class="chip" data-chip="row-coeficiente-aproveitamento" data-s="ok">CA</button>
+            <button type="button" class="chip" data-chip="row-indice-elevacao" data-s="ok">IE</button>
+            <button type="button" class="chip" data-chip="row-recuos-projeto" data-s="ok">Recuos</button>
+            <button type="button" class="chip" data-chip="row-outorga-onerosa" data-s="ok">OODC</button>
+            <button type="button" class="chip" data-chip="row-vagas" data-s="ok">Vagas</button>
+            <button type="button" class="chip" data-chip="row-bacia-detencao" data-s="ok">Bacia</button>
+            <button type="button" class="chip" data-chip="row-faixa-acumulo" data-s="ok">Acúmulo</button>
+            <button type="button" class="chip" data-chip="row-abrigo-residuos" data-s="ok">Resíduos</button>
+        </nav>
+
+        <div class="p-4 sm:p-6 mt-4 space-y-3">
+
+            <!-- 1. UHs -->
+            <div id="row-unidades-habitacionais" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left">LIMITE DE UNIDADES HABITACIONAIS</th>
+                        <th class="p-2 text-center">MÁXIMA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody><tr>
+                        <td class="p-2 font-bold">UHs</td>
+                        <td class="p-2 text-center font-bold text-slate-700" id="tab-uh-max">-</td>
+                        <td class="p-1.5"><input type="number" id="inp-uhs" min="0" class="input-yellow"></td>
+                        <td class="p-2 text-center"><span id="st-uhs" class="status-badge-fixed"></span></td>
+                    </tr></tbody>
+                </table>
+                <div class="hidden" id="txt-obs-uhs"></div>
+            </div>
+
+            <!-- 2. QUADRO DE ÁREAS -->
+            <div id="row-quadro-areas" class="scroll-mt-24 space-y-3">
+                <div class="overflow-x-auto">
+                    <table class="table-fixed-std">
+                        <colgroup><col class="w-[42%]"><col class="w-[29%]"><col class="w-[29%]"></colgroup>
+                        <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                            <th class="p-2 text-left">QUADRO DE ÁREAS</th>
+                            <th class="p-2 text-center">ÁREA CONSTRUÍDA (m²)</th>
+                            <th class="p-2 text-center">ÁREA OCUPADA (AO) (m²)</th>
+                        </tr></thead>
+                        <!-- tipologias de bloco / torre: o usuário acrescenta e remove (js/quadro_areas.js) -->
+                        <tbody id="qa-tipologias" class="divide-y divide-slate-200"></tbody>
+                        <tbody>
+                            <tr class="no-print"><td colspan="3" class="p-1.5">
+                                <button type="button" id="qa-tp-acrescentar" class="qa-acrescentar"><i class="fa-solid fa-plus mr-1"></i>ACRESCENTAR TIPOLOGIA</button>
+                                <input type="hidden" id="inp-tipologias"></td></tr>
+                        </tbody>
+                        <tbody class="divide-y divide-slate-200 border-t border-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="3" class="p-1.5 text-[#1B2E24]">LAZER</td></tr>
+                            <tr><td class="p-2 pl-6">LAZER</td>
+                                <td class="p-1"><input type="text" inputmode="decimal" id="inp-lazer-construida" data-mask="area" class="input-yellow"></td>
+                                <td class="p-1"><input type="text" inputmode="decimal" id="inp-lazer-ocupada" data-mask="area" class="input-yellow"></td></tr>
+                            <tr><td class="p-2 pl-6">DESCOBERTA <span class="text-[10px] text-slate-500">(não computada)</span></td>
+                                <td colspan="2" class="p-1"><input type="text" inputmode="decimal" id="inp-lazer-nao-coberta" data-mask="area" class="input-yellow qa-largo"></td></tr>
+                        </tbody>
+                        <!-- mais áreas de lazer: computam AC/AO ou não computam (js/quadro_areas.js) -->
+                        <tbody id="qa-lazer" class="divide-y divide-slate-200"></tbody>
+                        <tbody>
+                            <tr class="no-print"><td colspan="3" class="p-1.5 pl-6">
+                                <button type="button" id="qa-lazer-acrescentar" class="qa-acrescentar" title="Linha com área construída e ocupada (entra na AC e na AO)"><i class="fa-solid fa-plus mr-1"></i>LAZER (COMPUTA AC / AO)</button>
+                                <button type="button" id="qa-lazer-acrescentar-nc" class="qa-acrescentar ml-2" title="Linha com uma área só, que não entra na AC nem na AO (padrão da NÃO COBERTA)"><i class="fa-solid fa-plus mr-1"></i>LAZER (NÃO COMPUTA AC / AO)</button>
+                                <input type="hidden" id="inp-lazer-linhas"></td></tr>
+                        </tbody>
+                        <tbody id="qa-titulo" class="border-t border-slate-200">
+                            <tr class="bg-slate-100 font-bold"><td colspan="3" class="p-1.5 text-[#1B2E24]">OUTRAS ÁREAS</td></tr>
+                        </tbody>
+                        <!-- linhas livres: o usuário edita, acrescenta e remove (js/quadro_areas.js) -->
+                        <tbody id="qa-linhas" class="divide-y divide-slate-200"></tbody>
+                        <tbody>
+                            <tr class="no-print"><td colspan="3" class="p-1.5 pl-6">
+                                <button type="button" id="qa-acrescentar" class="qa-acrescentar"><i class="fa-solid fa-plus mr-1"></i>ACRESCENTAR OUTRAS ÁREAS</button>
+                                <input type="hidden" id="inp-quadro-linhas"></td></tr>
+                            <tr class="bg-emerald-50 font-extrabold text-slate-900 border-t-2 border-slate-400"><td class="p-2.5">ÁREA TOTAL</td>
+                                <td class="p-2.5 text-center text-emerald-800" id="calc-ac-total">0,00 m²</td>
+                                <td class="p-2.5 text-center text-emerald-800" id="calc-ao-total">0,00 m²</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="hidden" id="txt-obs-aptos"></div>
+            </div>
+
+            <!-- 3. LAZER -->
+            <div id="row-lazer" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-1.5">ÁREA DE LAZER
+                            <button type="button" class="info-btn no-print" data-info="info-lazer" aria-label="Informação: área de lazer (LOUOS, Art. 50, II, i e j)" title="Informação">i</button></span></th>
+                        <th class="p-2 text-center">EXIGIDA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr><td class="p-2 font-semibold">POSSUI ÁREA DE LAZER NAS UNIDADES PRIVATIVAS?</td>
+                            <td class="p-1.5"><div data-select="inp-lazer-privativa"></div></td>
+                            <td colspan="2" class="p-2 text-center text-[11px] text-slate-600" id="txt-lazer-fator">3,00 m² por UH</td></tr>
+                        <tr><td class="p-2 font-bold">ÁREA DE LAZER <span class="text-[10px] font-normal text-slate-500">(áreas construídas + não cobertas)</span></td>
+                            <td class="p-2 text-center font-bold" id="calc-lazer-exigida">0,00 m²</td>
+                            <td class="p-2 text-center font-bold text-emerald-800" id="calc-lazer-projeto">0,00 m²</td>
+                            <td class="p-2 text-center"><span id="st-lazer" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+                <div id="info-lazer" class="info-pop hidden" role="dialog" aria-label="Área de lazer: LOUOS, Art. 50, II">
+                    <p><b>i)</b> a partir de 10 unidades residenciais, o empreendimento deve ter uma área de uso comum destinada a lazer, equivalente a 3 (três) metros quadrados por unidade residencial.</p>
+                    <p><b>j)</b> a área de lazer definida no item anterior poderá ser reduzida em 50% (cinqüenta por cento), quando caracterizada nas unidades privativas.</p>
+                    <p class="info-fonte">LOUOS e suas alterações, Art. 50, II, alíneas i e j</p>
+                </div>
+            </div>
+
+            <!-- 4. PERMEABILIDADE -->
+            <div id="row-permeabilidade" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-1.5">TAXA DE PERMEABILIDADE
+                            <button type="button" class="info-btn no-print" data-info="info-perm" aria-label="Informação: TAXA DE PERMEABILIDADE" title="Informação">i</button></span></th>
+                        <th class="p-2 text-center">EXIGIDA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-bold">ÁREA MÍNIMA PERMEÁVEL (m²)</td>
+                            <td class="p-2 text-center font-bold" id="calc-perm-exigida-m2">0,00 m²</td>
+                            <td class="p-1.5"><input type="number" id="inp-perm-proj-m2" step="any" class="input-yellow"></td>
+                            <td class="p-2 text-center align-middle" rowspan="3"><span id="st-perm" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-semibold">TAXA DE PERMEABILIDADE (%)</td>
+                            <td class="p-2 text-center font-bold" id="calc-perm-exigida-pct">0,00%</td>
+                            <td class="p-2 text-center font-bold text-amber-700" id="calc-perm-proj-pct">0,00%</td></tr>
+                        <tr class="bg-amber-50"><td class="p-2 font-bold text-amber-900">COMPENSAÇÃO ÁREA PERMEÁVEL</td>
+                            <td class="p-2 text-center text-slate-400">-</td>
+                            <td class="p-2 text-center font-bold text-amber-900" id="calc-perm-deficit-m3">0,0000 m³</td></tr>
+                    </tbody>
+                </table>
+                <div id="info-perm" class="info-pop hidden" role="dialog" aria-label="TAXA DE PERMEABILIDADE">
+                    <p><b>Taxa de permeabilidade</b> é a relação percentual entre a área do terreno livre para infiltração das águas pluviais e a área total do lote ou gleba;</p>
+                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
+                </div>
+            </div>
+
+            <!-- 5. TO -->
+            <div id="row-taxa-ocupacao" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-1.5">TAXA DE OCUPAÇÃO (TO)
+                            <button type="button" class="info-btn no-print" data-info="info-to" aria-label="Informação: TAXA DE OCUPAÇÃO (TO)" title="Informação">i</button></span></th>
+                        <th class="p-2 text-center">MÁXIMA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-bold">TAXA DE OCUPAÇÃO (TO) (m²)</td>
+                            <td class="p-2 text-center font-bold" id="calc-to-max-m2">0,00 m²</td>
+                            <td class="p-2 text-center font-bold text-emerald-700" id="calc-to-proj-m2">0,00 m²</td>
+                            <td class="p-2 text-center" rowspan="2"><span id="st-to" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-semibold">TAXA DE OCUPAÇÃO (TO) (%)</td>
+                            <td class="p-2 text-center font-bold" id="calc-to-max-pct">0,00%</td>
+                            <td class="p-2 text-center font-bold text-emerald-700" id="calc-to-proj-pct">0,00%</td></tr>
+                    </tbody>
+                </table>
+                <div id="info-to" class="info-pop hidden" role="dialog" aria-label="TAXA DE OCUPAÇÃO (TO)">
+                    <p><b>Taxa de ocupação (TO)</b> é a relação entre a Área Ocupada (AO) e a Área do Terreno (AT), sendo: <b>TO = AO/AT</b>;</p>
+                    <img src="img/TAXA_OCUPACAO.png" alt="TAXA DE OCUPAÇÃO (TO)" loading="lazy" class="info-img">
+                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
+                </div>
+                <div class="hidden" id="txt-obs-to"></div>
+            </div>
+
+            <!-- 6. CA -->
+            <div id="row-coeficiente-aproveitamento" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-1.5">COEFICIENTE DE APROVEITAMENTO (CA)
+                            <button type="button" class="info-btn no-print" data-info="info-ca" aria-label="Informação: COEFICIENTE DE APROVEITAMENTO (CA)" title="Informação">i</button></span></th>
+                        <th class="p-2 text-center">MÁXIMA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-semibold">COEFICIENTE DE APROVEITAMENTO MÍNIMO (CAMin)</td>
+                            <td class="p-2 text-center" id="txt-ca-camin">-</td>
+                            <td class="p-2 text-center font-bold text-emerald-800" rowspan="3" id="calc-ca-proj">0,0000</td>
+                            <td class="p-2 text-center" rowspan="3"><span id="st-ca" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold text-emerald-800">COEFICIENTE DE APROVEITAMENTO BÁSICO (CABas)</td>
+                            <td class="p-2 text-center font-bold text-emerald-800" id="txt-ca-cabas">-</td></tr>
+                        <tr><td class="p-2 font-bold text-amber-800">COEFICIENTE DE APROVEITAMENTO MÁXIMO (CAMax)</td>
+                            <td class="p-2 text-center font-bold text-amber-800" id="txt-ca-camax">-</td></tr>
+                    </tbody>
+                </table>
+                <div id="info-ca" class="info-pop hidden" role="dialog" aria-label="COEFICIENTE DE APROVEITAMENTO (CA)">
+                    <p><b>Coeficiente de aproveitamento (CA)</b> é a relação entre a área construída (AC) e área do terreno (AT): <b>CA = AC/AT</b>.</p>
+                    <img src="img/COEFICIENTE_APROVEITAMENTO.png" alt="COEFICIENTE DE APROVEITAMENTO (CA)" loading="lazy" class="info-img">
+                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
+                </div>
+            </div>
+
+            <!-- 7. IE -->
+            <div id="row-indice-elevacao" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-1.5">ÍNDICE DE ELEVAÇÃO (IE)
+                            <button type="button" class="info-btn no-print" data-info="info-ie" aria-label="Informação: ÍNDICE DE ELEVAÇÃO (IE)" title="Informação">i</button></span></th>
+                        <th class="p-2 text-center">MÁXIMA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-bold">ÍNDICE DE ELEVAÇÃO (IE) - SEM OODC</td>
+                            <td class="p-2 text-center font-bold" id="txt-ie-sem">-</td>
+                            <td class="p-2 text-center font-bold text-slate-900" rowspan="2" id="calc-ie-proj">0,0000</td>
+                            <td class="p-2 text-center" rowspan="2"><span id="st-ie" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold text-amber-800">ÍNDICE DE ELEVAÇÃO (IE) - COM OODC</td>
+                            <td class="p-2 text-center font-bold text-amber-800" id="txt-ie-com">-</td></tr>
+                    </tbody>
+                </table>
+                <div id="info-ie" class="info-pop hidden" role="dialog" aria-label="ÍNDICE DE ELEVAÇÃO (IE)">
+                    <p><b>Índice de elevação (IE)</b> - é a relação entre a área construída (AC) e a área ocupada (AO) de uma edificação: <b>IE = AC/AO</b>;</p>
+                    <img src="img/INDICE_ELEVACAO.png" alt="ÍNDICE DE ELEVAÇÃO (IE)" loading="lazy" class="info-img">
+                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
+                </div>
+            </div>
+
+            <!-- 8. RECUOS -->
+            <div id="row-recuos-projeto" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-2">RECUOS MÍNIMOS
+                            <button type="button" class="btn-recuos no-print" title="Implantação: terreno com os recuos mínimos e as cotas"><i class="fa-solid fa-pen-ruler"></i></button></span></th>
+                        <th class="p-2 text-center">MÁXIMA / REGRA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-bold">FRENTE</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-frente-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-frente-val">-</td><td class="p-2 text-center"><span id="st-rec-frente" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">LATERAL E FUNDOS</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-lateral-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-lat-val">-</td><td class="p-2 text-center"><span id="st-rec-lat" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">LATERAL E FUNDOS (COM OODC)</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-oodc-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-oodc-val">-</td><td class="p-2 text-center"><span id="st-rec-oodc" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 9. OODC -->
+            <div id="row-outorga-onerosa" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left">OUTORGA ONEROSA DO DIREITO DE CONSTRUIR (OODC)</th>
+                        <th class="p-2 text-center">DADOS DO PROJETO</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr><td class="p-2.5 font-bold bg-slate-50">OODC APLICÁVEL</td><td class="p-2.5 font-bold text-center text-slate-700" id="txt-oodc-aplicavel">-</td></tr>
+                        <tr id="row-oodc-aplicar" class="hidden"><td class="p-2.5 font-bold bg-slate-50">APLICAR OUTORGA ONEROSA?</td><td class="p-1.5"><div data-select="inp-aplicar-oodc"></div></td></tr>
+                        <tr id="row-oodc-area" class="hidden"><td class="p-2.5 font-bold bg-slate-50">ÁREA A SER ADQUIRIDA POR OUTORGA ONEROSA (m²)</td><td class="p-2.5 font-bold text-center text-slate-800" id="calc-oodc-area">0,00 m²</td></tr>
+                        <tr id="row-oodc-valor" class="bg-amber-50 hidden"><td class="p-2.5 font-bold text-amber-900 text-xs">VALOR ESTIMADO DA OUTORGA ONEROSA (R$)</td><td class="p-2.5 font-extrabold text-center text-amber-900 text-xs" id="calc-oodc-valor">R$ 0,00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 10. VAGAS -->
+            <div id="row-vagas" class="scroll-mt-24 space-y-3 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left">DIMENSIONAMENTO DE VAGAS DE ESTACIONAMENTO</th>
+                        <th class="p-2 text-center">EXIGIDAS</th>
+                        <th class="p-2 text-center">OFERTADAS</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="bg-slate-100 font-bold"><td colspan="4" class="p-1.5 text-[#1B2E24]">VAGAS PARA MORADORES</td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS COMUNS PARA MORADOR</td><td class="p-2 text-center" id="calc-vagas-morador-comum-exig">0</td><td class="p-1.5"><input type="number" id="inp-vagas-morador-comum-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-morador-comum" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS PCD PARA MORADOR</td><td class="p-2 text-center" id="calc-vagas-morador-pcd-exig">0</td><td class="p-1.5"><input type="number" id="inp-vagas-morador-pcd-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-morador-pcd" class="status-badge-fixed"></span></td></tr>
+                        <tr class="font-bold"><td class="p-2">TOTAL DE VAGAS PARA MORADOR</td><td class="p-2 text-center" id="calc-vagas-morador-exig">0</td><td class="p-2 text-center text-emerald-800" id="calc-vagas-morador-total-ofer">0</td><td class="p-2 text-center"><span id="st-vagas-morador" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="bg-slate-100 font-bold"><td colspan="4" class="p-1.5 text-[#1B2E24]">VAGAS PARA VISITANTES</td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS COMUNS PARA VISITANTE</td><td class="p-2 text-center" id="calc-vagas-vis-comum-exig">0</td><td class="p-1.5"><input type="number" id="inp-vagas-vis-comum-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-vis-comum" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS PCD PARA VISITANTE</td><td class="p-2 text-center" id="calc-vagas-vis-pcd-exig">1</td><td class="p-1.5"><input type="number" id="inp-vagas-vis-pcd-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-vis-pcd" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS IDOSO PARA VISITANTE</td><td class="p-2 text-center" id="calc-vagas-vis-idoso-exig">1</td><td class="p-1.5"><input type="number" id="inp-vagas-vis-idoso-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-vis-idoso" class="status-badge-fixed"></span></td></tr>
+                        <tr class="font-bold"><td class="p-2">TOTAL DE VAGAS PARA VISITANTE</td><td class="p-2 text-center" id="calc-vagas-vis-total-exig">0</td><td class="p-2 text-center text-emerald-800" id="calc-vagas-vis-total-ofer">0</td><td class="p-2 text-center"><span id="st-vagas-visitante" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="bg-slate-100 font-bold"><td colspan="4" class="p-1.5 text-[#1B2E24]">MOTOS E BICICLETAS</td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS PARA MOTO</td><td class="p-2 text-center" id="calc-vagas-moto-exig">0</td><td class="p-1.5"><input type="number" id="inp-vagas-moto-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-moto" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS PARA BICICLETA</td><td class="p-2 text-center" id="calc-vagas-bike-exig">0</td><td class="p-1.5"><input type="number" id="inp-vagas-bike-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-bike" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="bg-slate-100 font-bold"><td colspan="4" class="p-1.5 text-[#1B2E24]">CARGA E DESCARGA</td></tr>
+                        <tr><td class="p-2 font-bold">VAGAS DE CARGA E DESCARGA</td><td class="p-2 text-center font-semibold">NO MÍNIMO 1 VAGA</td><td class="p-1.5"><input type="number" id="inp-vagas-carga-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-carga" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 11. BACIA -->
+            <div id="row-bacia-detencao" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase"><th class="p-2 text-left">BACIA DE DETENÇÃO (DRENAGEM INCIDENTE)</th><th class="p-2 text-center">PROJETO / DIMENSIONAMENTO</th></tr></thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr><td class="p-2.5 font-bold bg-slate-50">VOLUME DA BACIA DE DETENÇÃO</td><td class="p-2.5 font-bold text-center text-slate-900" id="calc-bacia-vol-pluvial">0,0000 m³</td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50">VOLUME TOTAL DA BACIA DE DETENÇÃO (PLUVIAL + COMPENSAÇÃO)</td><td class="p-2.5 font-extrabold text-center text-emerald-800 bg-emerald-50 text-sm" id="calc-bacia-vol-total">0,0000 m³</td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50">LARGURA DA BACIA DE DETENÇÃO (m)</td><td class="p-1.5"><input type="number" id="inp-bacia-largura" min="0" step="any" class="input-yellow"></td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50">COMPRIMENTO DA BACIA DE DETENÇÃO (m)</td><td class="p-1.5"><input type="number" id="inp-bacia-comprimento" min="0" step="any" class="input-yellow"></td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50">PROFUNDIDADE DA BACIA DE DETENÇÃO (m)</td><td class="p-2.5 font-bold text-center text-slate-800" id="calc-bacia-profundidade">0,00 m</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 12. FAIXA DE ACÚMULO -->
+            <div id="row-faixa-acumulo" class="scroll-mt-24 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left">
+                            <span>FAIXA DE ACÚMULO</span>
+                            <a href="https://www.agetran.ms.gov.br" target="_blank" rel="noopener noreferrer" class="ml-2 text-[10px] text-emerald-300 underline lowercase font-normal">link agetran <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </th>
+                        <th class="p-2 text-center">EXIGIDA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-bold">NÚMERO DE FAIXAS DE ACESSO</td><td class="p-2 text-center font-bold" data-min="1">1</td><td class="p-1.5"><input type="number" id="inp-acumulo-faixas" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-faixas" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">NÚMERO MÍNIMO DE VEÍCULOS PARALELO À VIA</td><td class="p-2 text-center font-bold" data-min="4">4</td><td class="p-1.5"><input type="number" id="inp-acumulo-veiculos" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-veiculos" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">QUANTIDADE DE VAGAS DE ESPERA</td><td class="p-2 text-center font-bold" data-min="8">8</td><td class="p-1.5"><input type="number" id="inp-acumulo-vagas" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-vagas" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">COMPRIMENTO MÍNIMO NA TESTADA (m)</td><td class="p-2 text-center font-bold" data-min="19.2">19,20 m</td><td class="p-1.5"><input type="number" id="inp-acumulo-comprimento" min="0" step="any" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-comprimento" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 13. RESÍDUOS -->
+            <div id="row-abrigo-residuos" class="scroll-mt-24 space-y-3 overflow-x-auto">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase"><th class="p-2 text-left">ABRIGO DE RESÍDUOS SÓLIDOS</th><th class="p-2 text-center">DADOS DE PROJETO</th></tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-semibold">QUANTIDADE DE UHs</td><td class="p-2 text-center font-bold" id="calc-res-uhs">0</td></tr>
+                        <tr><td class="p-2 font-semibold">QUANTIDADE DE DORMITÓRIOS POR U.H.</td><td class="p-1.5"><input type="number" id="inp-res-dorms" min="0" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold">HABITANTES POR DORMITÓRIO</td><td class="p-1.5"><input type="number" id="inp-res-hab-dorm" min="0" class="input-yellow"></td></tr>
+                        <tr class="bg-slate-50 font-bold"><td class="p-2">QUANTIDADE ESTIMADA DE MORADORES</td><td class="p-2 text-center text-slate-900" id="calc-res-total-moradores">0</td></tr>
+                        <tr><td class="p-2 font-semibold">QUANTIDADE DE FUNCIONÁRIOS</td><td class="p-1.5"><input type="number" id="inp-res-func" min="0" class="input-yellow"></td></tr>
+                        <tr class="bg-emerald-50 font-bold"><td class="p-2 text-emerald-900">POPULAÇÃO ESTIMADA GERADORA DE RESÍDUOS</td><td class="p-2 text-center text-emerald-900" id="calc-res-pop-total">0 Pessoas</td></tr>
+                        <tr><td class="p-2 font-semibold">PRODUÇÃO DIÁRIA ESTIMADA POR HABITANTE</td><td class="p-1.5"><input type="number" id="inp-res-taxa-hab" step="0.1" min="0" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold">INTERVALO ENTRE COLETAS - REJEITOS / ORGÂNICOS (DIAS)</td><td class="p-1.5"><input type="number" id="inp-res-dias-org" min="1" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold">INTERVALO ENTRE COLETAS - RECICLÁVEIS (DIAS)</td><td class="p-1.5"><input type="number" id="inp-res-dias-rec" min="1" class="input-yellow"></td></tr>
+                    </tbody>
+                </table>
+
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-left">ABRIGO DE RESÍDUOS SÓLIDOS (DIMENSIONAMENTO m²)</th>
+                        <th class="p-2 text-center">EXIGIDA</th>
+                        <th class="p-2 text-center">PROJETO</th>
+                        <th class="p-2 text-center">SITUAÇÃO</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td class="p-2 font-bold">REJEITOS / ORGÂNICOS</td><td class="p-2 text-center font-bold" id="calc-res-org-exig">0,00 m²</td><td class="p-1.5"><input type="number" id="inp-res-org-proj" step="0.5" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-res-org" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">RECICLÁVEIS</td><td class="p-2 text-center font-bold" id="calc-res-rec-exig">0,00 m²</td><td class="p-1.5"><input type="number" id="inp-res-rec-proj" step="0.5" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-res-rec" class="status-badge-fixed"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </section>
+    <!-- SEÇÃO 3: CATEGORIA DE USO (auxilia a identificar a categoria do empreendimento) -->
+    <section id="tab-categoria" class="tab-content hidden bg-white rounded-xl shadow-sm border border-slate-200">
+        <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
+            <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-[#2E7D32]"></i>IDENTIFICAÇÃO DA CATEGORIA DE USO
+            </h2>
+            <span class="text-[10px] sm:text-xs bg-white/10 text-slate-200 px-2 py-0.5 rounded font-mono">LOUOS - LC 205/2012</span>
+        </div>
+
+        <div class="p-4 sm:p-6 mt-4 space-y-3">
+            <div class="no-print grid grid-cols-1 md:grid-cols-12 gap-3 bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
+                <label class="md:col-span-5"><span class="cu-rotulo">ATIVIDADE DO EMPREENDIMENTO</span>
+                    <input type="search" id="cu-busca" data-nao-salvar autocomplete="off" placeholder="ex.: farmácia, supermercado, escritório, motel, residencial" class="cu-input"></label>
+                <label class="md:col-span-2"><span class="cu-rotulo">ÁREA CONSTRUÍDA (m²)</span>
+                    <input type="number" id="cu-area" data-nao-salvar min="0" step="any" placeholder="porte em m²" class="cu-input"></label>
+                <label class="md:col-span-2"><span class="cu-rotulo">UNIDADES (UH)</span>
+                    <input type="number" id="cu-uhs" data-nao-salvar min="0" step="1" placeholder="nº de unidades" class="cu-input"></label>
+                <div class="md:col-span-3 flex items-end gap-2">
+                    <button type="button" id="cu-dados-projeto" class="cu-btn cu-btn-verde" title="Preenche área construída e UHs com os dados da aba Empreendimento"><i class="fa-solid fa-file-import"></i> dados do projeto</button>
+                    <button type="button" id="cu-limpar" class="cu-btn" title="Limpar a busca e os filtros"><i class="fa-solid fa-eraser"></i> limpar</button>
+                </div>
+                <div class="md:col-span-12 flex flex-wrap items-center gap-2">
+                        <button type="button" class="cu-chip ativo" data-cu-grupo="">TODAS</button>
+                        <button type="button" class="cu-chip" data-cu-grupo="R">R - RESIDENCIAL</button>
+                        <button type="button" class="cu-chip" data-cu-grupo="V">V - COMÉRCIO VAREJISTA</button>
+                        <button type="button" class="cu-chip" data-cu-grupo="A">A - COMÉRCIO ATACADISTA</button>
+                        <button type="button" class="cu-chip" data-cu-grupo="S">S - SERVIÇOS</button>
+                        <button type="button" class="cu-chip" data-cu-grupo="I">I - INDUSTRIAL</button>
+                        <button type="button" class="cu-chip" data-cu-grupo="E">E - ESPECIAL</button>
+                    <label class="ml-auto flex items-center gap-2 text-[11px] font-bold text-slate-700 cursor-pointer">
+                        <input type="checkbox" id="cu-so-zona" data-nao-salvar class="w-4 h-4 accent-[#2E7D32]"> SOMENTE PERMITIDAS NA ZONA DO IMÓVEL
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-between gap-2 text-[11px] text-slate-600">
+                <span id="cu-resumo" class="font-bold"></span>
+                <span id="cu-contexto"></span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="table-fixed-std" id="cu-tabela">
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-center cu-c-cat">CATEGORIA</th>
+                        <th class="p-2 text-center cu-c-desc">ATIVIDADES</th>
+                        <th class="p-2 text-center cu-c-porte">PORTE</th>
+                        <th class="p-2 text-center cu-c-zona">NA ZONA</th>
+                        <th class="p-2 text-center cu-c-via">VIA MÍNIMA</th>
+                        <th class="p-2 text-center cu-c-acao no-print"></th>
+                    </tr></thead>
+                    <tbody id="cu-lista" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+            <div id="cu-notas" class="hidden text-[11px] text-slate-500 bg-slate-100 p-3 rounded-lg border border-slate-200 space-y-1"></div>
+        </div>
+    </section>
+    <!-- SEÇÃO 4: VAGAS (LOUOS, Anexo VI) -->
+    <section id="tab-vagas" class="tab-content hidden bg-white rounded-xl shadow-sm border border-slate-200">
+        <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
+            <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-square-parking text-[#2E7D32]"></i>DIMENSIONAMENTO DE VAGAS DE ESTACIONAMENTO
+            </h2>
+            <span class="text-[10px] sm:text-xs bg-white/10 text-slate-200 px-2 py-0.5 rounded font-mono">LOUOS - ANEXO VI</span>
+        </div>
+
+        <div class="p-4 sm:p-6 mt-4 space-y-3">
+            <div class="no-print grid grid-cols-1 md:grid-cols-12 gap-3 bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
+                <label class="md:col-span-9"><span class="cu-rotulo">ATIVIDADE DO EMPREENDIMENTO</span>
+                    <input type="search" id="vg-busca" data-nao-salvar autocomplete="off" placeholder="ex.: residencial, comércio, hotel, escola, restaurante" class="cu-input"></label>
+                <div class="md:col-span-3 flex items-end">
+                    <button type="button" id="vg-limpar" class="cu-btn" title="Limpar a busca"><i class="fa-solid fa-eraser"></i> limpar</button>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-between gap-2 text-[11px] text-slate-600">
+                <span id="vg-resumo" class="font-bold"></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table-fixed-std" id="vg-tabela">
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
+                        <th class="p-2 text-center vg-c-ativ">EMPREENDIMENTO / ATIVIDADE</th>
+                        <th class="p-2 text-center vg-c-num">Nº DE VAGAS</th>
+                        <th class="p-2 text-center vg-c-par">PARÂMETRO</th>
+                        <th class="p-2 text-center vg-c-ex">CARGA E DESCARGA</th>
+                        <th class="p-2 text-center vg-c-ex">EMBARQUE E DESEMBARQUE</th>
+                    </tr></thead>
+                    <tbody id="vg-lista" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+            <div id="vg-notas" class="text-[11px] text-slate-500 bg-slate-100 p-3 rounded-lg border border-slate-200 space-y-1"></div>
+
+            <!-- tipos de vaga: prancha no layout de VAGAS.jpg (cada figura já traz o título e as cotas; sem o .png usa o .jpg) -->
+            <div class="vg-figuras">
+                <p class="resumo-title">TIPOS DE VAGA</p>
+                <div class="vg-prancha">
+                    <div class="vg-linha vg-l1">
+                        <figure><img src="img/VG_COMUM.png" alt="VAGA COMUM: 2,40 x 4,80 m" onerror="this.onerror=null; this.src='img/VG_COMUM.jpg'"></figure>
+                        <figure><img src="img/VG_IDOSO.png" alt="VAGA IDOSO: 2,40 x 4,80 m" onerror="this.onerror=null; this.src='img/VG_IDOSO.jpg'"></figure>
+                        <div class="vg-pilha">
+                            <figure><img src="img/VG_MOTO.png" alt="VAGA DE MOTO: 2,40 x 1,20 m" onerror="this.onerror=null; this.src='img/VG_MOTO.jpg'"></figure>
+                            <figure><img src="img/VG_BICICLETA.png" alt="VAGA DE BICICLETA" onerror="this.onerror=null; this.src='img/VG_BICICLETA.jpg'"></figure>
+                        </div>
+                    </div>
+                    <div class="vg-linha vg-l2">
+                        <figure><img src="img/VG_PCD.png" alt="VAGA PcD: 2,40 x 4,80 m + faixa de 1,20 m" onerror="this.onerror=null; this.src='img/VG_PCD.jpg'"></figure>
+                        <figure><img src="img/VG_VISITANTE.png" alt="VAGA VISITANTE: 2,40 x 4,80 m" onerror="this.onerror=null; this.src='img/VG_VISITANTE.jpg'"></figure>
+                    </div>
+                    <div class="vg-linha vg-l3">
+                        <figure><img src="img/VG_CARGA_DESCARGA.png" alt="VAGA DE CARGA E DESCARGA: 3,10 x 8,00 m (paralela) ou 3,10 x 9,00 m (perpendicular)" onerror="this.onerror=null; this.src='img/VG_CARGA_DESCARGA.jpg'"></figure>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+<!-- AVISO (somente impressão) -->
+    <div id="print-sign" class="print-only">
+        <div class="print-aviso">Este relatório tem apenas a função de orientar com relação às informações básicas para implantação de empreendimentos na cidade de Campo Grande - MS.</div>
+    </div>
+</main>
+
+<footer class="no-print bg-[#1B2E24] text-slate-300 text-xs py-4 border-t border-slate-800 mt-12">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+        <p>© 2026 JSK Engenharia • UP! Urban Planning v3.8</p>
+        <p>Conforme Lei Complementar nº 341 de 04 de dezembro de 2018 (PDDUA)</p>
+    </div>
+</footer>
+
+<!-- Scripts pesados carregados com defer (ordem preservada) -->
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.js"></script>
+<script defer src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
+
+<!-- Aplicação (ordem importa: cada arquivo usa o que foi declarado nos anteriores) -->
+<!-- Bases geradas dos CSVs (ferramentas/gerar_dados.py) -->
+<script defer src="js/dados/bairros.js"></script>
+<script defer src="js/dados/PDDUA_A6_ZONAS_URBANAS.js"></script>
+<script defer src="js/dados/PDDUA_A7_ZONAS_AMBIENTAIS.js"></script>
+<script defer src="js/dados/PDDUA_A71_TRA.js"></script>
+<script defer src="js/dados/PDDUA_A81_CATEGORIA_USO.js"></script>
+<script defer src="js/dados/PDDUA_A82_INDICES_URBANISTICOS.js"></script>
+<script defer src="js/dados/PDDUA_A82_LOTES_MINIMOS.js"></script>
+<script defer src="js/dados/PDDUA_A82_RECUOS_MINIMOS.js"></script>
+<script defer src="js/dados/LOUOS_AV_COMP_LOCACIONAL.js"></script>
+<script defer src="js/dados/LOUOS_AIV_CAT_USO.js"></script>
+<script defer src="js/dados/LOUOS_AVI_VAGAS.js"></script>
+<!-- Aplicação -->
+<script defer src="js/utils.js"></script>
+<script defer src="js/comp_locacional.js"></script>
+<script defer src="js/ui.js"></script>
+<script defer src="js/zoneamento.js"></script>
+<script defer src="js/resumo.js"></script>
+<script defer src="js/categoria.js"></script>
+<script defer src="js/vagas.js"></script>
+<script defer src="js/quadro_areas.js"></script>
+<script defer src="js/recuos.js"></script>
+<script defer src="js/calculo.js"></script>
+<script defer src="js/mapa.js"></script>
+<script defer src="js/medicao.js"></script>
+<script defer src="js/desenho.js"></script>
+<script defer src="js/impressao.js"></script>
+<script defer src="js/projeto.js"></script>
+<script defer src="js/main.js"></script>
+</body>
+</html>
