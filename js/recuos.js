@@ -68,8 +68,15 @@ function avaliarRegra(regra, { ie, h }) {
 }
 
 const recuosDoImovel = () => { const zu = zonaDoBairro($('inp-bairro').value); return zu ? { zona: zu.zona, rec: recuosDaZona(zu.zona) } : null; };
-// h estimada: maior nº de pavimentos entre as tipologias x pé-direito
-const alturaEstimada = () => { const p = Math.max(0, ...tipologias.map(t => parseInt(t.pav, 10) || 0)); return p ? p * PE_DIREITO : null; };
+/* Altura h (PDDUA, Art. 38, § 1º): do piso do térreo até a laje do piso do último pavimento + 3 m.
+   Com a altura informada na tabela RECUOS MÍNIMOS: h = altura + 3; sem ela, estimada pelo maior nº de pavimentos x 3 m
+   (último piso a (pav - 1) x 3 m do térreo, + 3 m). Devolve { h, altura, estimada, pav } */
+function alturaH() {
+    const altura = vazio('inp-altura-edif') ? null : parseBR($('inp-altura-edif').value);
+    if (altura > 0) return { h: altura + 3, altura, estimada: false };
+    const pav = Math.max(0, ...tipologias.map(t => parseInt(t.pav, 10) || 0));
+    return pav ? { h: pav * PE_DIREITO, estimada: true, pav } : { h: null };
+}
 const textoRecuo = r => r.semRegra ? 'sem regra na zona' : r.falta ? 'informe ' + r.falta : r.valor === 0 ? 'Livre' : fmt(r.valor) + ' m';
 
 /* =========================================================
@@ -242,7 +249,7 @@ function criarDialogoRecuos() {
       <div id="rc-resumo" class="rc-resumo"></div>
       <div id="rc-desenho" class="rc-desenho"></div>
       <div class="flex flex-wrap items-center justify-between gap-2 mt-3">
-        <span class="text-[10.5px] text-slate-500">h estimada = maior nº de pavimentos x ${fmt(PE_DIREITO)} m (pode ser alterada). Desenho em escala, a partir dos limites do terreno.</span>
+        <span class="text-[10.5px] text-slate-500">h = altura do piso do térreo até a laje do piso do último pavimento + 3,00 m (tabela RECUOS MÍNIMOS; sem ela, estimada por pavimentos x ${fmt(PE_DIREITO)} m). Pode ser alterada aqui. Desenho em escala, a partir dos limites do terreno.</span>
         <span class="flex gap-2"><button type="button" data-rc="png" class="cu-btn"><i class="fa-solid fa-image"></i> Baixar PNG</button>
           <button type="button" data-rc="svg" class="cu-btn"><i class="fa-solid fa-file-code"></i> Baixar SVG</button></span>
       </div>`;
@@ -260,7 +267,7 @@ function criarDialogoRecuos() {
 function abrirRecuos() {
     if (!dlgRecuos) criarDialogoRecuos();
     calcularTudo();
-    const z = recuosDoImovel(), h = alturaEstimada();
+    const z = recuosDoImovel(), { h } = alturaH();
     $('rc-zona').value = z ? z.zona : '-';
     $('rc-ie').value = projetoIE ? fmt(projetoIE) : '';
     $('rc-h').value = h ? fmt(h) : '';

@@ -108,7 +108,11 @@ function calcularTudo() {
     txt('calc-ie-proj', fmt(ieProj, 4));
     // recuo exigido pela regra da zona para o IE do projeto e a altura estimada (recuos.js)
     projetoIE = temIE ? ieProj : null;
-    const recZ = recuosDoImovel(), hEst = alturaEstimada();
+    // altura h = altura informada + 3 m (ou estimada pelos pavimentos)
+    const alt = alturaH(), hEst = alt.h;
+    txt('calc-altura-h', alt.h == null ? '-' : alt.estimada ? `h ≈ ${fmt(alt.h)} m\n(estimada: ${alt.pav} pav. x ${fmt(PE_DIREITO)} m)`
+        : `h = ${fmt(alt.altura)} + 3,00 = ${fmt(alt.h)} m`);
+    const recZ = recuosDoImovel();
     [['frente', 'rec-frente-val', 'st-rec-frente'], ['lateral', 'rec-lat-val', 'st-rec-lat'], ['lateralOodc', 'rec-oodc-val', 'st-rec-oodc']].forEach(([k, id, st]) => {
         if (!recZ || !recZ.rec) { txt(id, '-'); setStatus(st, 'na'); return; }
         const r = avaliarRegra(recZ.rec[k], { ie: projetoIE, h: hEst });
