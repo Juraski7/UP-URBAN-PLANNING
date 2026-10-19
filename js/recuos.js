@@ -5,7 +5,6 @@
    "IE maior que 2 - h/4 (mínimo 3,00 m)", "Térreo e 1º pavimento - Livre", "Demais pavimentos - 5,00 m"... */
 'use strict';
 
-const PE_DIREITO = 3;                       // m por pavimento, para estimar a altura h da edificação
 let projetoIE = null;                       // IE do projeto (calculo.js)
 
 /* =========================================================
@@ -73,9 +72,10 @@ const recuosDoImovel = () => { const zu = zonaDoBairro($('inp-bairro').value); r
    (último piso a (pav - 1) x 3 m do térreo, + 3 m). Devolve { h, altura, estimada, pav } */
 function alturaH() {
     const altura = vazio('inp-altura-edif') ? null : parseBR($('inp-altura-edif').value);
-    if (altura > 0) return { h: altura + 3, altura, estimada: false };
+    const { acrescimo, peDireitoEstimado } = REGRAS.ALTURA;
+    if (altura > 0) return { h: altura + acrescimo, altura, estimada: false };
     const pav = Math.max(0, ...tipologias.map(t => parseInt(t.pav, 10) || 0));
-    return pav ? { h: pav * PE_DIREITO, estimada: true, pav } : { h: null };
+    return pav ? { h: pav * peDireitoEstimado, estimada: true, pav } : { h: null };
 }
 const textoRecuo = r => r.semRegra ? 'sem regra na zona' : r.falta ? 'informe ' + r.falta : r.valor === 0 ? 'Livre' : fmt(r.valor) + ' m';
 
@@ -249,7 +249,7 @@ function criarDialogoRecuos() {
       <div id="rc-resumo" class="rc-resumo"></div>
       <div id="rc-desenho" class="rc-desenho"></div>
       <div class="flex flex-wrap items-center justify-between gap-2 mt-3">
-        <span class="text-[10.5px] text-slate-500">h = altura do piso do térreo até a laje do piso do último pavimento + 3,00 m (tabela RECUOS MÍNIMOS; sem ela, estimada por pavimentos x ${fmt(PE_DIREITO)} m). Pode ser alterada aqui. Desenho em escala, a partir dos limites do terreno.</span>
+        <span class="text-[10.5px] text-slate-500">h = altura do piso do térreo até a laje do piso do último pavimento + ${fmt(REGRAS.ALTURA.acrescimo)} m (tabela RECUOS MÍNIMOS; sem ela, estimada por pavimentos x ${fmt(REGRAS.ALTURA.peDireitoEstimado)} m). Pode ser alterada aqui. Desenho em escala, a partir dos limites do terreno.</span>
         <span class="flex gap-2"><button type="button" data-rc="png" class="cu-btn"><i class="fa-solid fa-image"></i> Baixar PNG</button>
           <button type="button" data-rc="svg" class="cu-btn"><i class="fa-solid fa-file-code"></i> Baixar SVG</button></span>
       </div>`;

@@ -2,13 +2,14 @@
    MEDIR (só mede, não mexe no formulário)
    • Distância ............. linha com 1 ou mais trechos
    • Área .................. polígono com área e medida dos lados
+   • Desenhar por descrição (rumos/azimutes ou coordenadas UTM) e exportar KML: js/desenho.js
    TERRENO (atributos do imóvel: preenchem campos)
    • Largura da via ........ 2 pontos; preenche LARGURA DA VIA (MURO A MURO)
-   • Dimensões do terreno .. com KML carregado: área e lados dos polígonos do arquivo;
+   • Dimensões do terreno .. com KML carregado: área e lados dos polígonos do arquivo (já aparecem ao carregar; o botão oculta/mostra);
                              sem KML: desenha o terreno. A área pode ir para ÁREA DO LOTE (campo continua editável).
                              Os lados do terreno começam como LATERAL/FUNDOS; clique num lado para marcá-lo como FRENTE.
                              ladosDoTerreno() entrega os lados classificados (base para a futura aba de recuos).
-   • Desenhar por descrição (rumos/azimutes ou coordenadas UTM) e exportar KML: js/desenho.js
+   Uma ferramenta por vez: com uma ferramenta de desenho ativa, clicar num lado não o marca como FRENTE (o clique vira ponto).
    Edição: clique na linha para mover os pontos (Leaflet-Geoman); clique na medida para digitar o comprimento.
    Apagar: botão "Apagar feição" (depois clique na feição) ou botão direito — sempre com confirmação.
    Cálculos num plano local tangente ao elipsoide WGS84 (precisão milimétrica na escala de lotes e vias). */
@@ -239,15 +240,21 @@ function temPoligono(layer) {
     if (layer) percorrerPoligonos(layer, () => n++);
     return n > 0;
 }
-/* Botão "Dimensões do terreno" com KML: mostra/oculta a ÁREA (e o botão "usar como ÁREA DO LOTE") */
+/* ÁREA de cada polígono da camada (com o botão "usar como ÁREA DO LOTE"); devolve quantos polígonos rotulou.
+   Roda sozinho ao carregar o KML/KMZ/SHP (como se o usuário ativasse "Dimensões do terreno") */
+function mostrarRotulosKml() {
+    if (!rotulosKml || !currentLayer) return 0;
+    rotulosKml.clearLayers();
+    let n = 0;
+    percorrerPoligonos(currentLayer, pol => { rotulosKml.addLayer(rotuloTerreno(pol.getCenter(), areaDe(pol.getLatLngs()), 'ÁREA')); n++; });
+    return n;
+}
+/* Botão "Dimensões do terreno" com KML: mostra/oculta a ÁREA */
 function alternarRotulosKml() {
     if (rotulosKml.getLayers().length) return limparRotulosKml();
     if (!currentLayer) return aviso('Carregue um KML / KMZ / SHP primeiro.');
-    let n = 0;
-    percorrerPoligonos(currentLayer, pol => { rotulosKml.addLayer(rotuloTerreno(pol.getCenter(), areaDe(pol.getLatLngs()), 'ÁREA')); n++; });
-    if (!n) aviso('A camada carregada não tem polígono para medir.');
+    if (!mostrarRotulosKml()) aviso('A camada carregada não tem polígono para medir.');
     else if (ladosOrigem !== 'kml') prepararLadosKml();
-    marcarBotoes();
 }
 
 /* Ao carregar KML/KMZ/SHP: o polígono é dividido em lados (todos LATERAL/FUNDOS) para o usuário marcar a frente.
@@ -274,7 +281,7 @@ const ESTILO_LADO = {
     lateral: { color: '#475569', weight: 5, opacity: 0.9, dashArray: '3 7' },
     frente:  { color: '#EA580C', weight: 8, opacity: 1, dashArray: null }
 };
-let ladosGrupo = null, ladosTerreno = [], ladosOrigem = null, ladosLayer = null, resumoLados = null, ladosTotal = 0;
+let ladosGrupo = null, ladosTerreno = [], ladosOrigem = null, ladosLayer = null, ladosTotal = 0;
 
 const mesmoPonto = (p, q) => Math.abs(p.lat - q.lat) < 1e-6 && Math.abs(p.lng - q.lng) < 1e-6;
 const mesmoLado = (a, b, [fa, fb]) => (mesmoPonto(a, fa) && mesmoPonto(b, fb)) || (mesmoPonto(a, fb) && mesmoPonto(b, fa));
@@ -282,7 +289,6 @@ const mesmoLado = (a, b, [fa, fb]) => (mesmoPonto(a, fa) && mesmoPonto(b, fb)) |
 function limparLados() {
     if (ladosGrupo) ladosGrupo.clearLayers();
     ladosTerreno = []; ladosOrigem = null; ladosLayer = null; ladosTotal = 0;
-    atualizarResumoLados();
 }
 
 /* aneis: anéis externos; salvo: { frentes, posicoes, total } do projeto (ladosParaSalvar);
@@ -309,7 +315,7 @@ function montarLados(aneis, origem, salvo = {}, anteriores = []) {
         lado.linha = L.polyline([a, b], { ...ESTILO_LADO.lateral, pane: 'ladosTerreno', interactive: false, pmIgnore: true }).addTo(ladosGrupo);
         // área de clique invisível e mais larga (a linha tracejada só recebe clique nos traços)
         lado.alvo = L.polyline([a, b], { pane: 'ladosTerreno', color: '#000', opacity: 0.001, weight: 16, pmIgnore: true, bubblingMouseEvents: false, className: 'lado-alvo' }).addTo(ladosGrupo);
-        lado.alvo.on('click', () => modoApagar ? apagarTerreno() : alternarFrente(lado));
+        lado.alvo.on('click', () => { if (modoApagar) apagarTerreno(); else if (!ferramentaAtiva()) alternarFrente(lado); });
         const editavel = origem === 'desenho' && ladosLayer, iAnel = aneis.indexOf(anel);
         lado.rotulo = (editavel ? rotuloEditavel(meio(a, b), '', 'medida-lado', () => editarComprimento(ladosLayer, iAnel, i), apagarTerreno)
                                 : rotulo(meio(a, b), '', 'medida-lado')).addTo(ladosGrupo);
@@ -317,7 +323,6 @@ function montarLados(aneis, origem, salvo = {}, anteriores = []) {
         ladosTerreno.push(lado);
         pintarLado(lado);
     }));
-    atualizarResumoLados();
 }
 function pintarLado(l) {
     l.linha.setStyle(l.frente ? ESTILO_LADO.frente : ESTILO_LADO.lateral);
@@ -329,17 +334,8 @@ const apagarTerreno = () => ladosOrigem === 'desenho' && ladosLayer ? pedirApaga
 function alternarFrente(l) {
     l.frente = !l.frente;
     pintarLado(l);
-    atualizarResumoLados();
     mapaVer++;                     // conta como alteração do projeto
     verificarAlteracao();
-}
-function atualizarResumoLados() {
-    if (!resumoLados) return;
-    const el = resumoLados.getContainer(), n = ladosTerreno.length, f = ladosTerreno.filter(l => l.frente);
-    const qtd = (x, s, p) => `${x} ${x === 1 ? s : p}`;
-    el.classList.toggle('hidden', !n);
-    el.innerHTML = !n ? '' : `<b>FRENTE:</b> ${f.length ? `${qtd(f.length, 'lado', 'lados')} (${f.map(l => fmtM(l.comp)).join(' + ')})`
-        : '<span class="lados-pendente">clique no(s) lado(s) da frente</span>'} &nbsp;•&nbsp; <b>LATERAL/FUNDOS:</b> ${qtd(n - f.length, 'lado', 'lados')}`;
 }
 
 /* Lados classificados, para outras abas (ex.: recuos): tipo 'frente' | 'lateral_fundos'; anel = polígono a que o lado pertence */
@@ -367,23 +363,27 @@ function restaurarLados(d) {
 const GRUPOS_FERRAMENTAS = [
     { titulo: 'MEDIR', cls: 'medir-simples', itens: [
         ['dist', 'fa-ruler', 'Medir distância (clique nos pontos; clique no último ponto para terminar)'],
-        ['area', 'fa-draw-polygon', 'Medir área (clique nos vértices; clique no 1º ponto para fechar)']] },
+        ['area', 'fa-draw-polygon', 'Medir área (clique nos vértices; clique no 1º ponto para fechar)'],
+        ['descricao', 'fa-compass-drafting', 'Desenhar por descrição: rumos/azimutes e distâncias ou coordenadas UTM']] },
     { titulo: 'TERRENO', cls: 'medir-terreno', itens: [
         ['via', 'fa-road', 'Largura da via (muro a muro)'],
-        ['terreno', 'fa-vector-square', 'Dimensões do terreno'],
-        ['descricao', 'fa-compass-drafting', 'Desenhar por descrição: rumos/azimutes e distâncias ou coordenadas UTM'],
+        ['terreno', 'fa-vector-square', 'Dimensões do terreno (com KML: mostra/oculta a área)'],
         ['centralizar', 'fa-crosshairs', 'Centralizar o terreno no mapa']] },
     { titulo: '', cls: 'medir-acoes', itens: [
         ['apagar', 'fa-eraser', 'Apagar feição: clique aqui e depois na feição (Esc sai)'],
         ['limpar', 'fa-trash-can', 'Apagar todas as medições'],
         ['exportar', 'fa-file-export', 'Exportar os desenhos em KML']] }
 ];
+// só a ferramenta em uso fica destacada (os rótulos de área do KML ficam sempre visíveis e não contam como ferramenta)
 function marcarBotoes() {
     document.querySelectorAll('.medir-bar [data-ferramenta]').forEach(a => {
         const f = a.dataset.ferramenta;
-        a.classList.toggle('ativo', f === modoMedida || (f === 'apagar' && modoApagar) || (f === 'terreno' && !!rotulosKml && rotulosKml.getLayers().length > 0));
+        a.classList.toggle('ativo', f === modoMedida || (f === 'apagar' && modoApagar));
     });
 }
+/* Ferramenta de desenho em uso (ou escolha de ponto no mapa): os lados e as medidas não recebem clique (classe .desenhando) */
+const ferramentaAtiva = () => !!map && (map.pm.globalDrawModeEnabled() || map.getContainer().classList.contains('desenhando'));
+const marcarDesenhando = ligar => map.getContainer().classList.toggle('desenhando', ligar);
 function usarFerramenta(f) {
     if (f === 'centralizar') return centralizarTerreno();         // ações diretas: não interrompem um desenho em andamento
     if (f === 'exportar') return exportarKml();
@@ -417,11 +417,6 @@ function initMedicao() {
     // camada própria acima dos polígonos (overlayPane = 400) e abaixo dos rótulos: o clique no lado sempre chega nele
     map.createPane('ladosTerreno').style.zIndex = 450;
     ladosGrupo = L.layerGroup().addTo(map);
-    const Resumo = L.Control.extend({
-        options: { position: 'bottomleft' },
-        onAdd() { const d = L.DomUtil.create('div', 'leaflet-control lados-resumo hidden'); L.DomEvent.disableClickPropagation(d); return d; }
-    });
-    resumoLados = new Resumo().addTo(map);
 
     const Barra = L.Control.extend({
         options: { position: 'topleft' },
@@ -449,6 +444,7 @@ function initMedicao() {
     });
     map.on('pm:create', ({ layer }) => registrarMedida(layer, modoMedida || 'dist'));
     map.on('pm:drawend', () => { modoMedida = null; marcarBotoes(); });
+    map.on('pm:globaldrawmodetoggled', e => marcarDesenhando(e.enabled));
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
         if (map.pm.globalDrawModeEnabled()) map.pm.disableDraw();

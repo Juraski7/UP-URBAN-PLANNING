@@ -71,6 +71,11 @@
     .input-yellow.qa-largo { width: 100% !important; }
     .qa-vazia { display: none !important; }
     .info-pop { display: none !important; }
+    select.input-yellow { appearance: none !important; -webkit-appearance: none !important; }
+    .co-comodo { break-inside: avoid; }
+    #res-params { display: block !important; margin-top: 3mm; }      /* parâmetros do abrigo de resíduos (engrenagem) saem no relatório */
+    .modo-tag { display: none !important; }
+    .campo-prefixo span { font-size: inherit !important; }
     .vg-figuras { break-inside: avoid; }
     .vg-prancha { max-width: 128mm !important; border-width: .3mm !important; }      /* prancha de vagas: cabe numa página */                                  /* quadro de áreas: linhas OUTRAS sem área */
     .input-yellow.qa-nome { text-align: left !important; font-weight: 400; text-transform: uppercase; }

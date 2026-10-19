@@ -7,7 +7,8 @@
 const SELECTS = {
     'inp-fachada-ativa': [['SIM', 'SIM'], ['NAO', 'NÃO']],
     'inp-aplicar-oodc': [['NAO', 'NÃO'], ['SIM', 'SIM']],
-    'inp-lazer-privativa': [['NAO', 'NÃO'], ['SIM', 'SIM']]
+    'inp-lazer-privativa': [['NAO', 'NÃO'], ['SIM', 'SIM']],
+    'inp-matricula-cri': [['1', '1º CRI'], ['2', '2º CRI'], ['3', '3º CRI']]
 };
 // Texto exibido no botão: opção vazia não mostra nada (o CSS exibe "SELECIONE")
 const rotuloOpcao = (valor, texto) => valor ? texto : '';
@@ -121,6 +122,7 @@ function openTab(tabId) {
         btn.classList.toggle('font-medium', !active);
     });
     if (tabId === 'tab-basico' && map) setTimeout(() => map.invalidateSize(), 50);
+    if (tabId === 'tab-categoria' && CAT_USO_PRONTA) renderCategoriasUso();     // a tabela não é remontada com a aba fechada (calculo.js)
 }
 
 /* ---------- Navegação por seções ---------- */
@@ -217,28 +219,43 @@ function posicionarLista(btn, dd) {
     dd.style.top = (embaixo ? r.bottom + 4 : Math.max(8, r.top - alto - 4)) + 'px';
 }
 
-/* Janelinha de informação (botão "i"): posição fixa junto ao botão, para não ser cortada pela tabela */
-const fecharInfos = () => document.querySelectorAll('.info-pop:not(.hidden)').forEach(p => p.classList.add('hidden'));
+/* Janelinha de informação (botão "i"): posição fixa junto ao botão (não é cortada pela tabela), sempre dentro da tela.
+   Ao rolar a página ela acompanha o botão; fecha só ao clicar fora, no próprio "i" ou com Esc. Texto maior que a tela rola por dentro. */
+let infoAberta = null;                                       // { pop, btn }
+const fecharInfos = () => {
+    document.querySelectorAll('.info-pop:not(.hidden)').forEach(p => p.classList.add('hidden'));
+    infoAberta = null;
+};
+function posicionarInfo() {
+    if (!infoAberta) return;
+    const { pop, btn } = infoAberta, r = btn.getBoundingClientRect();
+    const tela = document.documentElement, vw = tela.clientWidth, vh = tela.clientHeight;   // área visível (sem as barras de rolagem)
+    pop.style.maxHeight = (vh - 16) + 'px';                                              // maior que a tela: rola por dentro
+    const largura = pop.offsetWidth, alto = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(r.left, vw - largura - 8)) + 'px';
+    const abaixo = vh - r.bottom - 8, acima = r.top - 8;
+    const top = abaixo >= alto || abaixo >= acima ? r.bottom + 6 : r.top - alto - 6;       // embaixo do botão; sem espaço, em cima
+    pop.style.top = Math.max(8, Math.min(top, vh - alto - 8)) + 'px';                       // nunca sai da tela
+    const sobra = pop.getBoundingClientRect().bottom - (vh - 8);                         // conferência pela posição real
+    if (sobra > 0) pop.style.top = Math.max(8, parseFloat(pop.style.top) - sobra) + 'px';
+}
 function alternarInfo(btn) {
     const pop = $(btn.dataset.info), abrir = pop.classList.contains('hidden');
     fecharInfos();
     if (!abrir) return;
     pop.classList.remove('hidden');
-    const r = btn.getBoundingClientRect(), largura = pop.offsetWidth;
-    pop.style.left = Math.max(8, Math.min(r.left, innerWidth - largura - 8)) + 'px';
-    const posicionar = () => {                                   // embaixo do botão; se não couber, em cima
-        const alto = pop.offsetHeight;
-        pop.style.top = (innerHeight - r.bottom - 8 >= alto || r.top < alto + 8 ? r.bottom + 6 : r.top - alto - 6) + 'px';
-    };
-    posicionar();
+    pop.scrollTop = 0;
+    infoAberta = { pop, btn };
+    posicionarInfo();
     const img = pop.querySelector('img');
-    if (img && !img.complete) img.addEventListener('load', posicionar, { once: true });      // figura carrega só ao abrir
+    if (img && !img.complete) img.addEventListener('load', posicionarInfo, { once: true });      // figura carrega só ao abrir
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharInfos(); });
-window.addEventListener('scroll', () => {                    // janelas em posição fixa não acompanham a rolagem: fecham
-    fecharInfos();
-    document.querySelectorAll('.custom-select-dropdown:not(.hidden)').forEach(d => d.classList.add('hidden'));
+window.addEventListener('scroll', () => {
+    posicionarInfo();                                        // a janela de informação acompanha o botão
+    document.querySelectorAll('.custom-select-dropdown:not(.hidden)').forEach(d => d.classList.add('hidden'));    // listas de seleção fecham
 }, { passive: true });
+window.addEventListener('resize', posicionarInfo);
 
 /* Enter conclui o preenchimento do campo (sai do campo: aplica máscara, valida e recalcula).
    Nos campos com busca, o handler do próprio campo roda antes e escolhe a sugestão marcada. */

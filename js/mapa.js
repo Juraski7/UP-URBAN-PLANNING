@@ -37,6 +37,7 @@ function showLayer(layer, salvo = null) {
     const bounds = currentLayer.getBounds();
     if (bounds.isValid()) map.fitBounds(bounds, { padding: PADDING_MAPA });
     prepararLadosKml(salvo);                               // lados do polígono: todos LATERAL/FUNDOS até marcar a frente
+    mostrarRotulosKml();                                   // dimensões do terreno já aparecem: lados e ÁREA (medicao.js)
 }
 
 const ESTILO_MAPA = { color: '#EAB308', weight: 3, fillOpacity: 0.2 };

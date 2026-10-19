@@ -77,6 +77,10 @@ function renderZoneamento(areaLote) {
     renderNotas('obs-recuos', 'RECUOS MÍNIMOS',
         (rec ? numerosDeNota(Object.values(rec).join(' ')) : [])
             .filter(n => RECUOS_NOTAS[n]).sort(crescente).map(n => `(${n}) ${RECUOS_NOTAS[n]}.`));
+    // categorias da LOUOS (Anexo IV) que a zona não admite, com as atividades e o porte
+    renderNotas('obs-nao-permitidas', `ATIVIDADES NÃO PERMITIDAS NA ZONA ${escHtml(zona || '')}`,
+        (usos ? CAT_USO_DESC.filter(it => !permissaoNaZona(usos, it.cat).permitida) : [])
+            .map(it => `<b>${it.cat} - ${GRUPOS_USO[it.cat[0]] || ''}</b> (${escHtml(it.porte)}): ${escHtml(it.desc)}`));
 
     return { amb, b, usos };
 }
@@ -132,7 +136,7 @@ function renderCompatibilidade({ usos, largVia, faixaVia, faixaUH, acTotal, uhs,
         [...notas].sort().map(n => `(${n}) ${COMP_LOCACIONAL_NOTAS[n]}`));
     // o quadro de observações some quando nenhum grupo tem nota
     $('box-observacoes').classList.toggle('hidden',
-        ['obs-categorias', 'obs-indices', 'obs-recuos', 'obs-comp-locacional'].every(id => !$(id).children.length));
+        ['obs-categorias', 'obs-indices', 'obs-recuos', 'obs-comp-locacional', 'obs-nao-permitidas'].every(id => !$(id).children.length));
 
     return { zona: sZona, via: sVia };
 }

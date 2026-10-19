@@ -1,25 +1,25 @@
 /* ====================================================================================================
    PDDUA_A82_LOTES_MINIMOS
-   ANEXO 8.2 - ÍNDICES E INSTRUMENTOS URBANÍSTICOS - LOTES MÍNIMOS - RECUOS MÍNIMOS - LEI COMPLEMENTAR n. 341/2018
-   ====================================================================================================
-   Conteúdo: lotes mínimos por zona
-             area = ÁREA (m²) • testadaEsquina = Testada Esquina (m) • testadaMeio = Testada Meio de Quadra (m) • null = "-"
-   Origem:   LOTES_MINIMOS.csv
-             GERADO por ferramentas/gerar_dados.py: não editar à mão (corrija o CSV e gere de novo).
+   Aba "PDDUA_A82_LOTES_MINIMOS" da planilha TABELAS.xlsx: 12 linha(s) x 4 coluna(s).
+   GERADO por ferramentas/gerar_dados.py: não editar à mão (altere a planilha e rode o gerador).
+   Quem interpreta esta tabela: js/tabelas.js.
    ==================================================================================================== */
 'use strict';
 
-const LOTES_DB = {
-    "Z1":                      { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "Z2":                      { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "Z3":                      { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "Z4":                      { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "Z5":                      { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "ZC":                      { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "ZEIE":                    { area: 500, testadaEsquina: 20, testadaMeio: 20 },
-    "Distrito de Anhanduí":    { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "Zona de Expansão Urbana": { area: 250, testadaEsquina: 15, testadaMeio: 10 },
-    "EA1":                     { area: null, testadaEsquina: null, testadaMeio: null },
-    "EA2":                     { area: null, testadaEsquina: null, testadaMeio: null },
-    "EA3":                     { area: null, testadaEsquina: null, testadaMeio: null }
+(window.TABELAS = window.TABELAS || {})["PDDUA_A82_LOTES_MINIMOS"] = {
+    colunas: ["ZONA_URBANA", "ÁREA (m²)", "Testada Esquina (m)", "Testada Meio de Quadra (m)"],
+    linhas: [
+        ["Z1", "250", "15", "10"],
+        ["Z2", "250", "15", "10"],
+        ["Z3", "250", "15", "10"],
+        ["Z4", "250", "15", "10"],
+        ["Z5", "250", "15", "10"],
+        ["ZC", "250", "15", "10"],
+        ["ZEIE", "500", "20", "20"],
+        ["Distrito de Anhanduí", "250", "15", "10"],
+        ["Zona de Expansão Urbana", "250", "15", "10"],
+        ["EA1", "-", "-", "-"],
+        ["EA2", "-", "-", "-"],
+        ["EA3", "-", "-", "-"]
+    ]
 };

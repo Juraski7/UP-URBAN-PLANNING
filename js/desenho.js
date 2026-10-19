@@ -145,8 +145,10 @@ function criarDialogo() {
             dlgDesenho.close();
             aviso('Clique no mapa no PONTO INICIAL da descrição.');
             map.getContainer().style.cursor = 'crosshair';
+            marcarDesenhando(true);                                       // o clique num lado do terreno vai para o mapa
             map.once('click', ev => {
                 map.getContainer().style.cursor = '';
+                marcarDesenhando(false);
                 const u = UTM.para(ev.latlng.lat, ev.latlng.lng, +$('dd-fuso').value);
                 $('dd-e0').value = fmt(u.e, 3).replace(/\./g, ''); $('dd-n0').value = fmt(u.n, 3).replace(/\./g, '');
                 dlgDesenho.showModal(); resumirDesenho(modo);

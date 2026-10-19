@@ -28,7 +28,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
 <header id="app-header" class="no-print bg-gradient-to-r from-[#1B2E24] to-[#264A33] text-white shadow-md sticky top-0 z-[1000] border-b border-[#2E7D32]/40">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-20 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="flex items-center space-x-3 w-full sm:w-auto">
-            <span class="logo-up"><img src="img/UP.png" alt="UP! Urban Planning"></span>
+            <span class="logo-up"><img src="img/UP_URBAN.png" alt="UP! Urban Planning"></span>
             <h1 class="sr-only">UP! Urban Planning</h1>
         </div>
 
@@ -73,7 +73,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
     <!-- CABEÇALHO INSTITUCIONAL (somente impressão) -->
     <div id="print-head" class="print-only">
         <div class="ph-top">
-            <img src="img/UP.png" alt="UP! Urban Planning">
+            <img src="img/UP_URBAN.png" alt="UP! Urban Planning">
             <div class="ph-title">
                 <div class="ph-kicker">JSK ENGENHARIA</div>
                 <div class="ph-h1">RELATÓRIO DE VIABILIDADE URBANÍSTICA</div>
@@ -92,6 +92,9 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
         <nav class="-mb-px flex space-x-6 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
             <button type="button" data-tab="tab-basico" id="btn-tab-basico" class="tab-btn border-[#2E7D32] text-[#2E7D32] whitespace-nowrap py-4 px-1 border-b-2 font-bold text-xs sm:text-sm transition-colors">
                 <i class="fa-solid fa-map-location-dot mr-2"></i>Imóvel
+            </button>
+            <button type="button" data-tab="tab-comodos" id="btn-tab-comodos" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors">
+                <i class="fa-solid fa-door-open mr-2"></i>Compartimentos
             </button>
             <button type="button" data-tab="tab-empreendimento" id="btn-tab-empreendimento" class="tab-btn border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors">
                 <i class="fa-solid fa-building mr-2"></i>Empreendimento
@@ -129,9 +132,13 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                         <tbody class="divide-y divide-slate-200 bg-slate-50/50">
                             <tr><td class="p-1.5 font-bold bg-white">PROJETO</td><td class="p-1"><input type="text" id="inp-projeto" class="input-yellow uppercase"></td></tr>
                             <tr><td class="p-1.5 font-bold bg-white">INSCRIÇÃO IMOBILIÁRIA</td><td class="p-1"><input type="text" inputmode="numeric" id="inp-inscricao" data-fmt="inscricao" maxlength="15" placeholder="00.00.000.000-0" class="input-yellow"></td></tr>
-                            <tr><td class="p-1.5 font-bold bg-white">MATRÍCULA / CRI</td><td class="p-1"><input type="text" id="inp-matricula" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">MATRÍCULA / CRI</td><td class="p-1"><div class="campo-duplo">
+                                <input type="text" inputmode="numeric" id="inp-matricula" data-fmt="milhar" placeholder="000.000" aria-label="Número da matrícula" class="input-yellow">
+                                <div data-select="inp-matricula-cri"></div></div></td></tr>
                             <tr><td class="p-1.5 font-bold bg-white">ENDEREÇO</td><td class="p-1"><input type="text" id="inp-endereco" class="input-yellow uppercase"></td></tr>
-                            <tr><td class="p-1.5 font-bold bg-white">QUADRA E LOTE</td><td class="p-1"><input type="text" id="inp-quadra-lote" class="input-yellow uppercase"></td></tr>
+                            <tr><td class="p-1.5 font-bold bg-white">QUADRA E LOTE</td><td class="p-1"><div class="campo-duplo">
+                                <label class="campo-prefixo"><span>QUADRA</span><input type="text" id="inp-quadra" class="input-yellow uppercase"></label>
+                                <label class="campo-prefixo"><span>LOTE</span><input type="text" id="inp-lote" class="input-yellow uppercase"></label></div></td></tr>
                             <tr><td class="p-1.5 font-bold bg-white">BAIRRO</td><td class="p-1"><input type="text" id="inp-bairro" placeholder="DIGITE PARA BUSCAR O BAIRRO" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-bairro" class="input-yellow uppercase"><ul id="lista-bairro" role="listbox" class="ac-list no-print hidden"></ul></td></tr>
                             <tr><td class="p-1.5 font-bold bg-white">PROPRIETÁRIO</td><td class="p-1"><input type="text" id="inp-proprietario" class="input-yellow uppercase"></td></tr>
                             <tr><td class="p-1.5 font-bold bg-white">ÁREA DO LOTE</td><td class="p-1"><input type="text" inputmode="decimal" id="inp-area-lote" data-mask="area" class="input-yellow font-bold"></td></tr>
@@ -253,6 +260,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                     <div id="obs-comp-locacional" class="space-y-1"></div>
                     <div id="obs-indices" class="space-y-1"></div>
                     <div id="obs-recuos" class="space-y-1"></div>
+                    <div id="obs-nao-permitidas" class="space-y-1"></div>
                 </div>
             </div>
         </div>
@@ -301,16 +309,22 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                 <table class="table-fixed-std">
                     <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
                     <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
-                        <th class="p-2 text-left">LIMITE DE UNIDADES HABITACIONAIS</th>
+                        <th class="p-2 text-left">UNIDADES HABITACIONAIS</th>
                         <th class="p-2 text-center">MÁXIMA</th>
                         <th class="p-2 text-center">PROJETO</th>
                         <th class="p-2 text-center">SITUAÇÃO</th>
                     </tr></thead>
-                    <tbody><tr>
+                    <tbody class="divide-y divide-slate-200"><tr>
                         <td class="p-2 font-bold">UHs</td>
                         <td class="p-2 text-center font-bold text-slate-700" id="tab-uh-max">-</td>
                         <td class="p-1.5"><input type="number" id="inp-uhs" min="0" class="input-yellow"></td>
                         <td class="p-2 text-center"><span id="st-uhs" class="status-badge-fixed"></span></td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 font-semibold">FRAÇÃO <span class="text-[10px] font-normal text-slate-500">(área total do terreno ÷ UHs do projeto)</span></td>
+                        <td class="p-2 text-center text-slate-400">-</td>
+                        <td class="p-2 text-center font-bold text-emerald-800" id="calc-uh-fracao">-</td>
+                        <td class="p-2 text-center text-slate-400">-</td>
                     </tr></tbody>
                 </table>
                 <div class="hidden" id="txt-obs-uhs"></div>
@@ -338,15 +352,13 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                             <tr><td class="p-2 pl-6">LAZER</td>
                                 <td class="p-1"><input type="text" inputmode="decimal" id="inp-lazer-construida" data-mask="area" class="input-yellow"></td>
                                 <td class="p-1"><input type="text" inputmode="decimal" id="inp-lazer-ocupada" data-mask="area" class="input-yellow"></td></tr>
-                            <tr><td class="p-2 pl-6">DESCOBERTA <span class="text-[10px] text-slate-500">(não computada)</span></td>
-                                <td colspan="2" class="p-1"><input type="text" inputmode="decimal" id="inp-lazer-nao-coberta" data-mask="area" class="input-yellow qa-largo"></td></tr>
                         </tbody>
-                        <!-- mais áreas de lazer: computam AC/AO ou não computam (js/quadro_areas.js) -->
+                        <!-- mais áreas de lazer (padrão: DESCOBERTA, não computada): computam AC/AO ou não computam; o usuário edita e remove (js/quadro_areas.js) -->
                         <tbody id="qa-lazer" class="divide-y divide-slate-200"></tbody>
                         <tbody>
                             <tr class="no-print"><td colspan="3" class="p-1.5 pl-6">
                                 <button type="button" id="qa-lazer-acrescentar" class="qa-acrescentar" title="Linha com área construída e ocupada (entra na AC e na AO)"><i class="fa-solid fa-plus mr-1"></i>LAZER (COMPUTA AC / AO)</button>
-                                <button type="button" id="qa-lazer-acrescentar-nc" class="qa-acrescentar ml-2" title="Linha com uma área só, que não entra na AC nem na AO (padrão da NÃO COBERTA)"><i class="fa-solid fa-plus mr-1"></i>LAZER (NÃO COMPUTA AC / AO)</button>
+                                <button type="button" id="qa-lazer-acrescentar-nc" class="qa-acrescentar ml-2" title="Linha com uma área só, que não entra na AC nem na AO (como a DESCOBERTA)"><i class="fa-solid fa-plus mr-1"></i>LAZER (NÃO COMPUTA AC / AO)</button>
                                 <input type="hidden" id="inp-lazer-linhas"></td></tr>
                         </tbody>
                         <tbody id="qa-titulo" class="border-t border-slate-200">
@@ -388,11 +400,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                             <td class="p-2 text-center"><span id="st-lazer" class="status-badge-fixed"></span></td></tr>
                     </tbody>
                 </table>
-                <div id="info-lazer" class="info-pop hidden" role="dialog" aria-label="Área de lazer: LOUOS, Art. 50, II">
-                    <p><b>i)</b> a partir de 10 unidades residenciais, o empreendimento deve ter uma área de uso comum destinada a lazer, equivalente a 3 (três) metros quadrados por unidade residencial.</p>
-                    <p><b>j)</b> a área de lazer definida no item anterior poderá ser reduzida em 50% (cinqüenta por cento), quando caracterizada nas unidades privativas.</p>
-                    <p class="info-fonte">LOUOS e suas alterações, Art. 50, II, alíneas i e j</p>
-                </div>
+                <div id="info-lazer" class="info-pop hidden" role="dialog" aria-label="Área de lazer: LOUOS, Art. 50, II"></div>
             </div>
 
             <!-- 4. PERMEABILIDADE -->
@@ -409,7 +417,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                     <tbody>
                         <tr><td class="p-2 font-bold">ÁREA MÍNIMA PERMEÁVEL (m²)</td>
                             <td class="p-2 text-center font-bold" id="calc-perm-exigida-m2">0,00 m²</td>
-                            <td class="p-1.5"><input type="number" id="inp-perm-proj-m2" step="any" class="input-yellow"></td>
+                            <td class="p-1.5"><input type="text" inputmode="decimal" id="inp-perm-proj-m2" data-mask="area" class="input-yellow"></td>
                             <td class="p-2 text-center align-middle" rowspan="3"><span id="st-perm" class="status-badge-fixed"></span></td></tr>
                         <tr><td class="p-2 font-semibold">TAXA DE PERMEABILIDADE (%)</td>
                             <td class="p-2 text-center font-bold" id="calc-perm-exigida-pct">0,00%</td>
@@ -419,10 +427,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                             <td class="p-2 text-center font-bold text-amber-900" id="calc-perm-deficit-m3">0,0000 m³</td></tr>
                     </tbody>
                 </table>
-                <div id="info-perm" class="info-pop hidden" role="dialog" aria-label="TAXA DE PERMEABILIDADE">
-                    <p><b>Taxa de permeabilidade</b> é a relação percentual entre a área do terreno livre para infiltração das águas pluviais e a área total do lote ou gleba;</p>
-                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
-                </div>
+                <div id="info-perm" class="info-pop hidden" role="dialog" aria-label="TAXA DE PERMEABILIDADE"></div>
             </div>
 
             <!-- 5. TO -->
@@ -446,11 +451,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                             <td class="p-2 text-center font-bold text-emerald-700" id="calc-to-proj-pct">0,00%</td></tr>
                     </tbody>
                 </table>
-                <div id="info-to" class="info-pop hidden" role="dialog" aria-label="TAXA DE OCUPAÇÃO (TO)">
-                    <p><b>Taxa de ocupação (TO)</b> é a relação entre a Área Ocupada (AO) e a Área do Terreno (AT), sendo: <b>TO = AO/AT</b>;</p>
-                    <img src="img/TAXA_OCUPACAO.png" alt="TAXA DE OCUPAÇÃO (TO)" loading="lazy" class="info-img">
-                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
-                </div>
+                <div id="info-to" class="info-pop hidden" role="dialog" aria-label="TAXA DE OCUPAÇÃO (TO)"></div>
                 <div class="hidden" id="txt-obs-to"></div>
             </div>
 
@@ -476,11 +477,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                             <td class="p-2 text-center font-bold text-amber-800" id="txt-ca-camax">-</td></tr>
                     </tbody>
                 </table>
-                <div id="info-ca" class="info-pop hidden" role="dialog" aria-label="COEFICIENTE DE APROVEITAMENTO (CA)">
-                    <p><b>Coeficiente de aproveitamento (CA)</b> é a relação entre a área construída (AC) e área do terreno (AT): <b>CA = AC/AT</b>.</p>
-                    <img src="img/COEFICIENTE_APROVEITAMENTO.png" alt="COEFICIENTE DE APROVEITAMENTO (CA)" loading="lazy" class="info-img">
-                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
-                </div>
+                <div id="info-ca" class="info-pop hidden" role="dialog" aria-label="COEFICIENTE DE APROVEITAMENTO (CA)"></div>
             </div>
 
             <!-- 7. IE -->
@@ -503,11 +500,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                             <td class="p-2 text-center font-bold text-amber-800" id="txt-ie-com">-</td></tr>
                     </tbody>
                 </table>
-                <div id="info-ie" class="info-pop hidden" role="dialog" aria-label="ÍNDICE DE ELEVAÇÃO (IE)">
-                    <p><b>Índice de elevação (IE)</b> - é a relação entre a área construída (AC) e a área ocupada (AO) de uma edificação: <b>IE = AC/AO</b>;</p>
-                    <img src="img/INDICE_ELEVACAO.png" alt="ÍNDICE DE ELEVAÇÃO (IE)" loading="lazy" class="info-img">
-                    <p class="info-fonte">PDDUA e suas alterações, Anexo 1 - Definições</p>
-                </div>
+                <div id="info-ie" class="info-pop hidden" role="dialog" aria-label="ÍNDICE DE ELEVAÇÃO (IE)"></div>
             </div>
 
             <!-- 8. RECUOS -->
@@ -532,11 +525,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                         <tr><td class="p-2 font-bold">LATERAL E FUNDOS (COM OODC)</td><td class="p-2 text-center whitespace-pre-line" id="txt-rec-oodc-regra">-</td><td class="p-2 text-center font-bold whitespace-pre-line" id="rec-oodc-val">-</td><td class="p-2 text-center"><span id="st-rec-oodc" class="status-badge-fixed"></span></td></tr>
                     </tbody>
                 </table>
-                <div id="info-recuos" class="info-pop hidden" role="dialog" aria-label="Altura (h) e recuo">
-                    <p><b>Altura (h)</b> é a medida em metros, cotada do piso do pavimento térreo até a laje do piso do último pavimento, acrescida de 3 m (três metros);</p>
-                    <p><b>Recuo</b> é a distância mínima entre a projeção horizontal da edificação e a divisa do lote;</p>
-                    <p class="info-fonte">PDDUA e suas alterações, Art. 38, § 1º e Anexo 1 - Definições</p>
-                </div>
+                <div id="info-recuos" class="info-pop hidden" role="dialog" aria-label="Altura (h) e recuo"></div>
             </div>
 
             <!-- 9. OODC -->
@@ -561,7 +550,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                 <table class="table-fixed-std">
                     <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
                     <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
-                        <th class="p-2 text-left">DIMENSIONAMENTO DE VAGAS DE ESTACIONAMENTO</th>
+                        <th class="p-2 text-left">VAGAS DE ESTACIONAMENTO</th>
                         <th class="p-2 text-center">EXIGIDAS</th>
                         <th class="p-2 text-center">OFERTADAS</th>
                         <th class="p-2 text-center">SITUAÇÃO</th>
@@ -595,7 +584,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                     <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
                     <tbody class="divide-y divide-slate-200">
                         <tr class="bg-slate-100 font-bold"><td colspan="4" class="p-1.5 text-[#1B2E24]">CARGA E DESCARGA</td></tr>
-                        <tr><td class="p-2 font-bold">VAGAS DE CARGA E DESCARGA</td><td class="p-2 text-center font-semibold">NO MÍNIMO 1 VAGA</td><td class="p-1.5"><input type="number" id="inp-vagas-carga-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-carga" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 pl-6">VAGAS DE CARGA E DESCARGA</td><td class="p-2 text-center font-semibold" id="calc-vagas-carga-exig">-</td><td class="p-1.5"><input type="number" id="inp-vagas-carga-ofer" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-vagas-carga" class="status-badge-fixed"></span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -604,15 +593,17 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
             <div id="row-bacia-detencao" class="scroll-mt-24 overflow-x-auto">
                 <table class="table-fixed-std">
                     <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
-                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase"><th class="p-2 text-left">BACIA DE DETENÇÃO (DRENAGEM INCIDENTE)</th><th class="p-2 text-center">PROJETO / DIMENSIONAMENTO</th></tr></thead>
+                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase"><th class="p-2 text-left">BACIA DE DETENÇÃO</th><th class="p-2 text-center">PROJETO / DIMENSIONAMENTO</th></tr></thead>
                     <tbody class="divide-y divide-slate-200">
                         <tr><td class="p-2.5 font-bold bg-slate-50">VOLUME DA BACIA DE DETENÇÃO</td><td class="p-2.5 font-bold text-center text-slate-900" id="calc-bacia-vol-pluvial">0,0000 m³</td></tr>
-                        <tr><td class="p-2.5 font-bold bg-slate-50">VOLUME TOTAL DA BACIA DE DETENÇÃO (PLUVIAL + COMPENSAÇÃO)</td><td class="p-2.5 font-extrabold text-center text-emerald-800 bg-emerald-50 text-sm" id="calc-bacia-vol-total">0,0000 m³</td></tr>
-                        <tr><td class="p-2.5 font-bold bg-slate-50">LARGURA DA BACIA DE DETENÇÃO (m)</td><td class="p-1.5"><input type="number" id="inp-bacia-largura" min="0" step="any" class="input-yellow"></td></tr>
-                        <tr><td class="p-2.5 font-bold bg-slate-50">COMPRIMENTO DA BACIA DE DETENÇÃO (m)</td><td class="p-1.5"><input type="number" id="inp-bacia-comprimento" min="0" step="any" class="input-yellow"></td></tr>
-                        <tr><td class="p-2.5 font-bold bg-slate-50">PROFUNDIDADE DA BACIA DE DETENÇÃO (m)</td><td class="p-2.5 font-bold text-center text-slate-800" id="calc-bacia-profundidade">0,00 m</td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50">VOLUME TOTAL DA BACIA DE DETENÇÃO (COM COMPENSAÇÃO)</td><td class="p-2.5 font-extrabold text-center text-emerald-800 bg-emerald-50 text-sm" id="calc-bacia-vol-total">0,0000 m³</td></tr>
+                        <!-- as três medidas são editáveis: com duas digitadas, a terceira é calculada pelo volume total (calculo.js) -->
+                        <tr><td class="p-2.5 font-bold bg-slate-50"><div class="bacia-rotulo">LARGURA DA BACIA DE DETENÇÃO (m)<span class="modo-tag" data-modo-de="inp-bacia-largura"></span></div></td><td class="p-1.5"><input type="number" id="inp-bacia-largura" data-auto="bacia" min="0" step="any" class="input-yellow"></td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50"><div class="bacia-rotulo">COMPRIMENTO DA BACIA DE DETENÇÃO (m)<span class="modo-tag" data-modo-de="inp-bacia-comprimento"></span></div></td><td class="p-1.5"><input type="number" id="inp-bacia-comprimento" data-auto="bacia" min="0" step="any" class="input-yellow"></td></tr>
+                        <tr><td class="p-2.5 font-bold bg-slate-50"><div class="bacia-rotulo">PROFUNDIDADE DA BACIA DE DETENÇÃO (m)<span class="modo-tag" data-modo-de="inp-bacia-profundidade"></span></div></td><td class="p-1.5"><input type="number" id="inp-bacia-profundidade" data-auto="bacia" min="0" step="any" class="input-yellow"></td></tr>
                     </tbody>
                 </table>
+                <input type="hidden" id="inp-bacia-manuais">
             </div>
 
             <!-- 12. FAIXA DE ACÚMULO -->
@@ -629,10 +620,10 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                         <th class="p-2 text-center">SITUAÇÃO</th>
                     </tr></thead>
                     <tbody>
-                        <tr><td class="p-2 font-bold">NÚMERO DE FAIXAS DE ACESSO</td><td class="p-2 text-center font-bold" data-min="1">1</td><td class="p-1.5"><input type="number" id="inp-acumulo-faixas" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-faixas" class="status-badge-fixed"></span></td></tr>
-                        <tr><td class="p-2 font-bold">NÚMERO MÍNIMO DE VEÍCULOS PARALELO À VIA</td><td class="p-2 text-center font-bold" data-min="4">4</td><td class="p-1.5"><input type="number" id="inp-acumulo-veiculos" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-veiculos" class="status-badge-fixed"></span></td></tr>
-                        <tr><td class="p-2 font-bold">QUANTIDADE DE VAGAS DE ESPERA</td><td class="p-2 text-center font-bold" data-min="8">8</td><td class="p-1.5"><input type="number" id="inp-acumulo-vagas" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-vagas" class="status-badge-fixed"></span></td></tr>
-                        <tr><td class="p-2 font-bold">COMPRIMENTO MÍNIMO NA TESTADA (m)</td><td class="p-2 text-center font-bold" data-min="19.2">19,20 m</td><td class="p-1.5"><input type="number" id="inp-acumulo-comprimento" min="0" step="any" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-comprimento" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">NÚMERO DE FAIXAS DE ACESSO</td><td class="p-2 text-center font-bold" id="calc-acumulo-faixas-exig">-</td><td class="p-1.5"><input type="number" id="inp-acumulo-faixas" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-faixas" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">NÚMERO MÍNIMO DE VEÍCULOS PARALELO À VIA</td><td class="p-2 text-center font-bold" id="calc-acumulo-veiculos-exig">-</td><td class="p-1.5"><input type="number" id="inp-acumulo-veiculos" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-veiculos" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">QUANTIDADE DE VAGAS DE ESPERA</td><td class="p-2 text-center font-bold" id="calc-acumulo-vagas-exig">-</td><td class="p-1.5"><input type="number" id="inp-acumulo-vagas" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-vagas" class="status-badge-fixed"></span></td></tr>
+                        <tr><td class="p-2 font-bold">COMPRIMENTO MÍNIMO NA TESTADA (m)</td><td class="p-2 text-center font-bold" id="calc-acumulo-comprimento-exig">-</td><td class="p-1.5"><input type="number" id="inp-acumulo-comprimento" min="0" step="any" class="input-yellow"></td><td class="p-2 text-center"><span id="st-acumulo-comprimento" class="status-badge-fixed"></span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -640,25 +631,10 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
             <!-- 13. RESÍDUOS -->
             <div id="row-abrigo-residuos" class="scroll-mt-24 space-y-3 overflow-x-auto">
                 <table class="table-fixed-std">
-                    <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
-                    <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase"><th class="p-2 text-left">ABRIGO DE RESÍDUOS SÓLIDOS</th><th class="p-2 text-center">DADOS DE PROJETO</th></tr></thead>
-                    <tbody>
-                        <tr><td class="p-2 font-semibold">QUANTIDADE DE UHs</td><td class="p-2 text-center font-bold" id="calc-res-uhs">0</td></tr>
-                        <tr><td class="p-2 font-semibold">QUANTIDADE DE DORMITÓRIOS POR U.H.</td><td class="p-1.5"><input type="number" id="inp-res-dorms" min="0" class="input-yellow"></td></tr>
-                        <tr><td class="p-2 font-semibold">HABITANTES POR DORMITÓRIO</td><td class="p-1.5"><input type="number" id="inp-res-hab-dorm" min="0" class="input-yellow"></td></tr>
-                        <tr class="bg-slate-50 font-bold"><td class="p-2">QUANTIDADE ESTIMADA DE MORADORES</td><td class="p-2 text-center text-slate-900" id="calc-res-total-moradores">0</td></tr>
-                        <tr><td class="p-2 font-semibold">QUANTIDADE DE FUNCIONÁRIOS</td><td class="p-1.5"><input type="number" id="inp-res-func" min="0" class="input-yellow"></td></tr>
-                        <tr class="bg-emerald-50 font-bold"><td class="p-2 text-emerald-900">POPULAÇÃO ESTIMADA GERADORA DE RESÍDUOS</td><td class="p-2 text-center text-emerald-900" id="calc-res-pop-total">0 Pessoas</td></tr>
-                        <tr><td class="p-2 font-semibold">PRODUÇÃO DIÁRIA ESTIMADA POR HABITANTE</td><td class="p-1.5"><input type="number" id="inp-res-taxa-hab" step="0.1" min="0" class="input-yellow"></td></tr>
-                        <tr><td class="p-2 font-semibold">INTERVALO ENTRE COLETAS - REJEITOS / ORGÂNICOS (DIAS)</td><td class="p-1.5"><input type="number" id="inp-res-dias-org" min="1" class="input-yellow"></td></tr>
-                        <tr><td class="p-2 font-semibold">INTERVALO ENTRE COLETAS - RECICLÁVEIS (DIAS)</td><td class="p-1.5"><input type="number" id="inp-res-dias-rec" min="1" class="input-yellow"></td></tr>
-                    </tbody>
-                </table>
-
-                <table class="table-fixed-std">
                     <colgroup><col class="w-[42%]"><col class="w-[20%]"><col class="w-[20%]"><col class="w-[18%]"></colgroup>
                     <thead><tr class="bg-[#1B2E24] text-white font-bold uppercase">
-                        <th class="p-2 text-left">ABRIGO DE RESÍDUOS SÓLIDOS (DIMENSIONAMENTO m²)</th>
+                        <th class="p-2 text-left"><span class="inline-flex items-center gap-2">ABRIGO DE RESÍDUOS SÓLIDOS
+                            <button type="button" id="btn-res-params" class="btn-engrenagem no-print" aria-expanded="false" aria-controls="res-params" title="Parâmetros do dimensionamento (dormitórios, habitantes, funcionários, coletas)"><i class="fa-solid fa-gear"></i></button></span></th>
                         <th class="p-2 text-center">EXIGIDA</th>
                         <th class="p-2 text-center">PROJETO</th>
                         <th class="p-2 text-center">SITUAÇÃO</th>
@@ -668,6 +644,28 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
                         <tr><td class="p-2 font-bold">RECICLÁVEIS</td><td class="p-2 text-center font-bold" id="calc-res-rec-exig">0,00 m²</td><td class="p-1.5"><input type="number" id="inp-res-rec-proj" step="0.5" min="0" class="input-yellow"></td><td class="p-2 text-center"><span id="st-res-rec" class="status-badge-fixed"></span></td></tr>
                     </tbody>
                 </table>
+
+                <!-- parâmetros (botão de engrenagem): padrão 2 dormitórios por UH, 2 habitantes por dormitório, funcionários = 10% das UHs,
+                     coleta a cada 3 dias (rejeitos / orgânicos) e 7 dias (recicláveis) -->
+                <div id="res-params" class="hidden">
+                <input type="hidden" id="inp-res-manuais">
+                <table class="table-fixed-std">
+                    <colgroup><col class="w-[42%]"><col class="w-[58%]"></colgroup>
+                    <thead><tr class="bg-[#2E7D32] text-white font-bold uppercase"><th class="p-2 text-left">PARÂMETROS DO DIMENSIONAMENTO</th><th class="p-2 text-center">DADOS DE PROJETO</th></tr></thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr><td class="p-2 font-semibold">QUANTIDADE DE UHs</td><td class="p-2 text-center font-bold" id="calc-res-uhs">0</td></tr>
+                        <tr><td class="p-2 font-semibold">QUANTIDADE DE DORMITÓRIOS POR U.H.</td><td class="p-1.5"><input type="number" id="inp-res-dorms" min="0" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold">HABITANTES POR DORMITÓRIO</td><td class="p-1.5"><input type="number" id="inp-res-hab-dorm" min="0" class="input-yellow"></td></tr>
+                        <!-- moradores e funcionários: calculados (AUTOMÁTICO) até o usuário digitar um valor (MANUAL); campo vazio volta ao cálculo -->
+                        <tr class="bg-slate-50 font-bold"><td class="p-2"><div class="bacia-rotulo"><span>QUANTIDADE ESTIMADA DE MORADORES <span class="text-[10px] font-normal text-slate-500">(UHs × dormitórios × habitantes)</span></span><span class="modo-tag" data-modo-de="inp-res-moradores"></span></div></td><td class="p-1.5"><input type="number" id="inp-res-moradores" data-auto="res" min="0" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold"><div class="bacia-rotulo"><span>QUANTIDADE DE FUNCIONÁRIOS <span class="text-[10px] font-normal text-slate-500">(10% das UHs, arredondado para cima)</span></span><span class="modo-tag" data-modo-de="inp-res-func"></span></div></td><td class="p-1.5"><input type="number" id="inp-res-func" data-auto="res" min="0" class="input-yellow"></td></tr>
+                        <tr class="bg-emerald-50 font-bold"><td class="p-2 text-emerald-900">POPULAÇÃO ESTIMADA GERADORA DE RESÍDUOS</td><td class="p-2 text-center text-emerald-900" id="calc-res-pop-total">0 Pessoas</td></tr>
+                        <tr><td class="p-2 font-semibold">PRODUÇÃO DIÁRIA ESTIMADA POR HABITANTE</td><td class="p-1.5"><input type="number" id="inp-res-taxa-hab" step="0.1" min="0" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold">INTERVALO ENTRE COLETAS - REJEITOS / ORGÂNICOS (DIAS)</td><td class="p-1.5"><input type="number" id="inp-res-dias-org" min="1" class="input-yellow"></td></tr>
+                        <tr><td class="p-2 font-semibold">INTERVALO ENTRE COLETAS - RECICLÁVEIS (DIAS)</td><td class="p-1.5"><input type="number" id="inp-res-dias-rec" min="1" class="input-yellow"></td></tr>
+                    </tbody>
+                </table>
+                </div>
             </div>
 
         </div>
@@ -732,7 +730,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
     <section id="tab-vagas" class="tab-content hidden bg-white rounded-xl shadow-sm border border-slate-200">
         <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
             <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
-                <i class="fa-solid fa-square-parking text-[#2E7D32]"></i>DIMENSIONAMENTO DE VAGAS DE ESTACIONAMENTO
+                <i class="fa-solid fa-square-parking text-[#2E7D32]"></i>VAGAS DE ESTACIONAMENTO
             </h2>
             <span class="text-[10px] sm:text-xs bg-white/10 text-slate-200 px-2 py-0.5 rounded font-mono">LOUOS - ANEXO VI</span>
         </div>
@@ -785,6 +783,26 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
             </div>
         </div>
     </section>
+    <!-- SEÇÃO 5: COMPARTIMENTOS (Código de Obras; tabela montada em js/comodos.js) -->
+    <section id="tab-comodos" class="tab-content hidden bg-white rounded-xl shadow-sm border border-slate-200">
+        <div class="bg-[#1B2E24] text-white px-4 sm:px-5 py-3 flex items-center justify-between border-b border-emerald-800">
+            <h2 class="font-bold text-sm sm:text-base tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-door-open text-[#2E7D32]"></i>COMPARTIMENTOS
+            </h2>
+            <span class="text-[10px] sm:text-xs bg-white/10 text-slate-200 px-2 py-0.5 rounded font-mono">CÓDIGO DE OBRAS</span>
+        </div>
+
+        <div class="p-4 sm:p-6 mt-4 space-y-3">
+            <div id="co-lista" class="space-y-4"></div>
+            <div class="no-print">
+                <button type="button" id="co-acrescentar" class="qa-acrescentar"><i class="fa-solid fa-plus mr-1"></i>ADICIONAR COMPARTIMENTO</button>
+                <input type="hidden" id="inp-comodos">
+            </div>
+            <div id="info-permanencia" class="info-pop hidden" role="dialog" aria-label="Classificação dos compartimentos: Código de Obras, Art. 107 a 109"></div>
+            <div id="info-geometria" class="info-pop hidden" role="dialog" aria-label="Dimensões do compartimento: Código de Obras, Art. 113 a 115"></div>
+            <div id="info-aberturas" class="info-pop hidden" role="dialog" aria-label="Aberturas para iluminação e ventilação: Código de Obras, Art. 124"></div>
+        </div>
+    </section>
 <!-- AVISO (somente impressão) -->
     <div id="print-sign" class="print-only">
         <div class="print-aviso">Este relatório tem apenas a função de orientar com relação às informações básicas para implantação de empreendimentos na cidade de Campo Grande - MS.</div>
@@ -794,7 +812,6 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
 <footer class="no-print bg-[#1B2E24] text-slate-300 text-xs py-4 border-t border-slate-800 mt-12">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
         <p>© 2026 JSK Engenharia • UP! Urban Planning v3.8</p>
-        <p>Conforme Lei Complementar nº 341 de 04 de dezembro de 2018 (PDDUA)</p>
     </div>
 </footer>
 
@@ -806,8 +823,9 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-omnivore/0.3.4/leaflet-omnivore.min.js"></script>
 
 <!-- Aplicação (ordem importa: cada arquivo usa o que foi declarado nos anteriores) -->
-<!-- Bases geradas dos CSVs (ferramentas/gerar_dados.py) -->
-<script defer src="js/dados/bairros.js"></script>
+<!-- Tabelas da lei: cópia fiel de cada aba da planilha _apoio/TABELAS.xlsx (ferramentas/gerar_dados.py); lidas por js/tabelas.js -->
+<script defer src="js/dados/BAIRROS.js"></script>
+<script defer src="js/dados/PDDUA_A52_MACROZONA_URBANA.js"></script>
 <script defer src="js/dados/PDDUA_A6_ZONAS_URBANAS.js"></script>
 <script defer src="js/dados/PDDUA_A7_ZONAS_AMBIENTAIS.js"></script>
 <script defer src="js/dados/PDDUA_A71_TRA.js"></script>
@@ -818,8 +836,17 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
 <script defer src="js/dados/LOUOS_AV_COMP_LOCACIONAL.js"></script>
 <script defer src="js/dados/LOUOS_AIV_CAT_USO.js"></script>
 <script defer src="js/dados/LOUOS_AVI_VAGAS.js"></script>
+<script defer src="js/dados/CO_COMPARTIMENTOS.js"></script>
+<script defer src="js/dados/CO_GEOMETRIA.js"></script>
+<script defer src="js/dados/CO_PE_DIREITO.js"></script>
+<script defer src="js/dados/CO_BANHEIROS.js"></script>
+<script defer src="js/dados/CO_ABERTURAS.js"></script>
+<script defer src="js/dados/REFERENCIAS.js"></script>          <!-- índice tabela -> anexo da lei (consulta) -->
 <!-- Aplicação -->
 <script defer src="js/utils.js"></script>
+<script defer src="js/tabelas.js"></script>               <!-- leitura das tabelas da lei (colunas e formatos) -->
+<script defer src="js/regras.js"></script>               <!-- parâmetros de lei verificados pelo sistema -->
+<script defer src="js/informacoes.js"></script>          <!-- textos das janelas "i" (artigos de lei exibidos) -->
 <script defer src="js/comp_locacional.js"></script>
 <script defer src="js/ui.js"></script>
 <script defer src="js/zoneamento.js"></script>
@@ -827,6 +854,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif
 <script defer src="js/categoria.js"></script>
 <script defer src="js/vagas.js"></script>
 <script defer src="js/quadro_areas.js"></script>
+<script defer src="js/comodos.js"></script>
 <script defer src="js/recuos.js"></script>
 <script defer src="js/calculo.js"></script>
 <script defer src="js/mapa.js"></script>

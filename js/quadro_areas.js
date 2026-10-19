@@ -2,7 +2,8 @@
    • TIPOLOGIAS de bloco / torre (o usuário acrescenta ou remove): nº de blocos, pavimentos (com o térreo),
      apartamentos por pavimento, AC/AO do térreo e AC do tipo. Subtotal por tipologia:
      BLOCOS x [(PAVIMENTOS - 1) x AC TIPO + AC TÉRREO]; AO = BLOCOS x AO TÉRREO.
-   • LAZER: linhas fixas LAZER (AC/AO) e NÃO COBERTA; o usuário acrescenta linhas que computam AC/AO ou que não computam.
+   • LAZER: linha fixa LAZER (AC/AO) + linhas livres que computam AC/AO ou que não computam
+     (padrão: DESCOBERTA, que não computa; o usuário edita e remove como as demais).
    • OUTRAS: linhas livres com AC e AO.
    Tudo entra na ÁREA TOTAL (menos o lazer que não computa). No projeto (.jsk) cada lista fica num campo oculto (JSON).
    Na impressão, linhas livres sem área não aparecem. */
@@ -61,11 +62,14 @@ function calcularTipologias() {
 
 /* ---------------------------------------------------------------- LINHAS LIVRES (LAZER e OUTRAS) */
 // cada linha: { nome, ac, ao } (computa AC/AO) ou { nome, valor } (não computa)
+const NOME_DESCOBERTA = 'DESCOBERTA (NÃO COMPUTADA)';
 const LIVRES = {
     outras: { corpo: 'qa-linhas', oculto: 'inp-quadro-linhas', titulo: 'qa-titulo', linhas: [],
-              padrao: ['GUARITA / PORTARIA', 'VAGAS COBERTAS', 'ÁREAS DE LAZER', 'OUTRAS ÁREAS'] },
-    lazer:  { corpo: 'qa-lazer', oculto: 'inp-lazer-linhas', linhas: [], padrao: [] }
+              padrao: () => ['GUARITA / PORTARIA', 'VAGAS COBERTAS', 'OUTRAS ÁREAS'].map(nome => linhaVazia(nome)) },
+    lazer:  { corpo: 'qa-lazer', oculto: 'inp-lazer-linhas', linhas: [], padrao: () => [linhaVazia(NOME_DESCOBERTA, false)] }
 };
+// linha de lazer lançada em OUTRAS (projetos antigos): vai para o grupo LAZER, onde entra na área de lazer
+const ehLazer = l => ['LAZER', 'AREA DE LAZER', 'AREAS DE LAZER'].includes(chave(l.nome));
 // projetos antigos (linhas fixas inp-ac-<k> / inp-ao-<k>); EDIFÍCIO GARAGEM só volta se tinha valor
 const QUADRO_ANTIGO = [['guarita', 'GUARITA / PORTARIA'], ['vagas-cob', 'VAGAS COBERTAS'], ['ed-garagem', 'EDIFÍCIO GARAGEM'],
                        ['lazer', 'ÁREAS DE LAZER'], ['outros', 'OUTRAS ÁREAS']];
@@ -117,13 +121,23 @@ function carregarQuadro(campos = {}) {
     renderTipologias();
     for (const g of Object.values(LIVRES)) {
         const linhas = lerJson(campos[g.oculto]);
+        const padrao = g.padrao().map(l => l.nome);
         g.linhas = (Array.isArray(linhas) ? linhas
-            : g === LIVRES.outras
+            : g === LIVRES.outras && 'inp-ac-guarita' in campos
                 ? QUADRO_ANTIGO.map(([k, nome]) => ({ nome, ac: campos['inp-ac-' + k] ?? '', ao: campos['inp-ao-' + k] ?? '' }))
-                               .filter(l => g.padrao.includes(l.nome) || !semArea(l))
-                : g.padrao.map(nome => linhaVazia(nome))).map(l => comoTexto(l, ['nome', ...camposLinha(l)], ['ac', 'ao', 'valor']));
-        renderLivres(g);
+                               .filter(l => padrao.includes(l.nome) || !semArea(l))
+                : g.padrao()).map(l => comoTexto(l, ['nome', ...camposLinha(l)], ['ac', 'ao', 'valor']));
     }
+    // projetos antigos: a DESCOBERTA era um campo fixo (inp-lazer-nao-coberta) -> 1ª linha livre do lazer
+    if ('inp-lazer-nao-coberta' in campos) {
+        const desc = comoTexto({ nome: NOME_DESCOBERTA, valor: campos['inp-lazer-nao-coberta'] }, ['nome', 'valor'], ['valor']);
+        if (Array.isArray(lerJson(campos['inp-lazer-linhas']))) LIVRES.lazer.linhas.unshift(desc);
+        else LIVRES.lazer.linhas[0] = desc;                    // sem linhas salvas: substitui a DESCOBERTA vazia do padrão
+    }
+    const lazerEmOutras = LIVRES.outras.linhas.filter(ehLazer);
+    LIVRES.outras.linhas = LIVRES.outras.linhas.filter(l => !ehLazer(l));
+    LIVRES.lazer.linhas.push(...lazerEmOutras.filter(l => !semArea(l)));
+    Object.values(LIVRES).forEach(renderLivres);
 }
 
 /* ---------------------------------------------------------------- EVENTOS */

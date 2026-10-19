@@ -5,35 +5,18 @@
 'use strict';
 
 /* =========================================================
-   LIMITE DE UHs PELA VIA (mesma regra da planilha)
-   < 12 m: até 6 • 12–15 m: até 25 • 15–18 m: até 200 • 18–22 m: até 250 • ≥ 22 m: mais de 250
+   LIMITE DE UHs PELA VIA (faixas em js/regras.js, REGRAS.UHS_VIA)
    ========================================================= */
-const FAIXAS_UH = [
-    { viaMin: 0,  maxUH: 6,   nota: 5 },     // até 6 UHs: dispensada a exigência de largura (nota 5)
-    { viaMin: 12, maxUH: 25 },
-    { viaMin: 15, maxUH: 200, nota: 4 },     // até 200 UHs: via mínima reduzida para 15 m (nota 4)
-    { viaMin: 18, maxUH: 250 },
-    { viaMin: 22, maxUH: Infinity }
-];
 // Faixa permitida pela via (ex.: 15 m -> até 200 UHs)
-const faixaPelaVia = via => FAIXAS_UH.filter(f => via >= f.viaMin).pop();
+const faixaPelaVia = via => REGRAS.UHS_VIA.faixas.filter(f => via >= f.viaMin).pop();
 // Faixa exigida pela quantidade de UHs (ex.: 200 UHs -> 15 m; 201 UHs -> 18 m)
-const faixaParaUHs = uhs => FAIXAS_UH.find(f => uhs <= f.maxUH);
+const faixaParaUHs = uhs => REGRAS.UHS_VIA.faixas.find(f => uhs <= f.maxUH);
 const textoLimiteUH = f => Number.isFinite(f.maxUH) ? `ATÉ ${f.maxUH} UHs` : 'MAIS DE 250 UHs';
 
 /* =========================================================
    VIA MÍNIMA POR CATEGORIA
    ========================================================= */
-/* Reduções previstas nas notas da tabela. aplica() -> true / false / null (falta o dado para decidir)
-   ctx = { ac: área construída total (NaN se não informada), uhs: nº de UHs (NaN se não informado) } */
-const sabido = v => Number.isFinite(v) && v > 0;
-const REDUCOES_VIA = {
-    1: { via: 18, quando: 'área construída até 2.500 m²', aplica: c => sabido(c.ac) ? c.ac <= 2500 : null },
-    2: { via: 15, quando: 'área construída até 500 m²',   aplica: c => sabido(c.ac) ? c.ac <= 500 : null },
-    3: { via: 15, quando: 'área construída até 2.500 m²', aplica: c => sabido(c.ac) ? c.ac <= 2500 : null },
-    4: { via: 15, quando: 'até 200 UHs',                  aplica: c => sabido(c.uhs) ? c.uhs <= 200 : null },
-    5: { via: 0,  quando: 'até 6 UHs',                    aplica: c => sabido(c.uhs) ? c.uhs <= 6 : null }
-};
+/* Reduções previstas nas notas da tabela: js/regras.js (REGRAS.VIA_MINIMA.reducoes) */
 
 /* Situação de uma categoria numa via:
    s: 'ok' | 'cond' (só atende se a nota se aplicar; falta dado) | 'fail'
@@ -41,7 +24,7 @@ const REDUCOES_VIA = {
 function situacaoVia(codigo, via, ctx) {
     const d = COMP_LOCACIONAL_DB[codigo];
     if (!d) return null;
-    const r = d.nota ? REDUCOES_VIA[d.nota] : null;
+    const r = d.nota ? REGRAS.VIA_MINIMA.reducoes[d.nota] : null;
     const base = d.via ?? 0;
     const reduzida = r ? Math.min(base, r.via) : base;
     const aplica = r ? r.aplica(ctx) : false;

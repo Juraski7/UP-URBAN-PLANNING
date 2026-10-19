@@ -36,6 +36,8 @@ const nf = {};
 const fmt = (v, d = 2) => (nf[d] ??= new Intl.NumberFormat('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d })).format(Number.isFinite(v) ? v : 0);
 const fmtMoeda = v => 'R$ ' + fmt(v);
 const safeDiv = (a, d) => d > 0 ? a / d : 0;
+// arredonda para cima sem o resíduo de ponto flutuante (100 x 0,07 = 7,000000000000001 -> 7, e não 8)
+const arredCima = v => Math.ceil(Math.round(v * 1e6) / 1e6);
 
 // Escapa texto para HTML/XML
 const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -86,16 +88,19 @@ const fmtInscricao = s => {
     return d.slice(0, 2) + (d.length > 2 ? '.' + d.slice(2, 4) : '') + (d.length > 4 ? '.' + d.slice(4, 7) : '')
          + (d.length > 7 ? '.' + d.slice(7, 10) : '') + (d.length > 10 ? '-' + d.slice(10, 11) : '');
 };
-document.querySelectorAll('input[data-fmt="inscricao"]').forEach(el => el.addEventListener('input', () => {
+/* Matrícula: só dígitos, com ponto de milhar (123.456) */
+const fmtMilhar = s => String(s).replace(/\D/g, '').replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const FORMATOS = { inscricao: fmtInscricao, milhar: fmtMilhar };
+document.querySelectorAll('input[data-fmt]').forEach(el => el.addEventListener('input', () => {
     const antes = el.value.slice(0, el.selectionStart).replace(/\D/g, '').length;   // dígitos antes do cursor
-    el.value = fmtInscricao(el.value);
+    el.value = FORMATOS[el.dataset.fmt](el.value);
     let pos = 0, cont = 0;
     while (pos < el.value.length && cont < antes) if (/\d/.test(el.value[pos++])) cont++;
     el.setSelectionRange(pos, pos);
 }));
 function reaplicarMascaras() {
     document.querySelectorAll('input[data-mask]').forEach(el => { el.value = aplicarMascara(el.value, MASKS[el.dataset.mask]); });
-    document.querySelectorAll('input[data-fmt="inscricao"]').forEach(el => { el.value = fmtInscricao(el.value); });
+    document.querySelectorAll('input[data-fmt]').forEach(el => { el.value = FORMATOS[el.dataset.fmt](el.value); });
 }
 
 /* =========================================================
@@ -118,7 +123,7 @@ const est = (ok, faltaDado) => faltaDado ? 'na' : ok ? 'ok' : 'fail';
 const pior = estados => ['fail', 'warn', 'na'].find(s => estados.includes(s)) || 'ok';
 
 /* =========================================================
-   CONSULTAS ÀS BASES (js/dados/*.js)
+   COMPARAÇÃO DE NOMES (bairros, zonas, categorias)
    ========================================================= */
 // Chave de comparação: maiúsculas, sem acento, espaços simples ("Santa fé" -> "SANTA FE")
 const semAcento = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -128,16 +133,4 @@ const buscaPor = db => {
     const idx = new Map(Object.entries(db).map(([nome, d]) => [chave(nome), d]));
     return nome => idx.get(chave(nome)) || null;
 };
-const bairroCanonico = s => BAIRROS.find(n => chave(n) === chave(s)) || null;
-const zonaDoBairro      = buscaPor(ZONA_DB);              // PDDUA_A6_ZONAS_URBANAS
-const zonaAmbiental     = buscaPor(ZONAS_AMBIENTAIS_DB);  // PDDUA_A7_ZONAS_AMBIENTAIS
-const traDoBairro       = buscaPor(TRA_DB);               // PDDUA_A71_TRA
-const usosDaZona        = buscaPor(CATEGORIA_USO_DB);     // PDDUA_A81_CATEGORIA_USO
-const indicesDaZona     = buscaPor(INDICES_DB);           // PDDUA_A82_INDICES_URBANISTICOS
-const lotesDaZona       = buscaPor(LOTES_DB);             // PDDUA_A82_LOTES_MINIMOS
-const recuosDaZona      = buscaPor(RECUOS_DB);            // PDDUA_A82_RECUOS_MINIMOS
-// zoneamento ambiental do bairro: Anexo 7 (za, permMin) + Anexo 7.1 (traMin, alfa, beta)
-const ambientalDoBairro = nome => {
-    const za = zonaAmbiental(nome), tra = traDoBairro(nome);
-    return za || tra ? { ...za, ...tra } : null;
-};
+// consultas a cada base (bairro, zona...): js/tabelas.js

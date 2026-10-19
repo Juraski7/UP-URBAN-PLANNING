@@ -93,7 +93,7 @@ function textoVia(sv, via) {
     const metros = v => v === 0 ? 'DISPENSADA' : fmt(v) + ' m';
     if (sv.base === 0) return 'SEM EXIGÊNCIA';
     if (!sv.nota) return metros(sv.base) + icone;
-    const r = REDUCOES_VIA[sv.nota];
+    const r = REGRAS.VIA_MINIMA.reducoes[sv.nota];
     if (sv.reduziu) return `${metros(sv.exig)}${icone}<div class="cu-exc"><s>${fmt(sv.base)} m</s> • ${nota(sv.nota)}</div>`;
     if (sv.aplica === false) return `${metros(sv.base)}${icone}<div class="cu-exc">${nota(sv.nota)} não se aplica</div>`;
     return `${metros(sv.base)}${icone}<div class="cu-exc">${metros(sv.reduzida)} se ${r.quando} • ${nota(sv.nota)}</div>`;

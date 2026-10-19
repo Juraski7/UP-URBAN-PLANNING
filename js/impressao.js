@@ -11,8 +11,11 @@ function preencherImpressao() {
     $('ph-projeto').textContent = val('inp-projeto');
     $('ph-inscricao').textContent = ($('inp-inscricao').value || '').trim() || '-';
     $('ph-endereco').textContent = val('inp-endereco');
-    $('map-caption').textContent = `Situação do imóvel - ${val('inp-endereco')} • ${val('inp-quadra-lote')} • Base: ${baseMapa}` + (currentLayer ? ' • Camada importada em amarelo' : '');
+    $('map-caption').textContent = `Situação do imóvel - ${val('inp-endereco')} • ${quadraLote() || '-'} • Base: ${baseMapa}` + (currentLayer ? ' • Camada importada em amarelo' : '');
 }
+// "QUADRA 08A LOTE 14X" (só as partes preenchidas)
+const quadraLote = () => [['QUADRA', 'inp-quadra'], ['LOTE', 'inp-lote']]
+    .map(([rot, id]) => { const v = ($(id).value || '').trim().toUpperCase(); return v ? `${rot} ${v}` : ''; }).filter(Boolean).join(' ');
 const tituloPdf = () => `Viabilidade - ${val('inp-projeto')} - ${($('inp-inscricao').value || '').trim()}`;      // nome sugerido do PDF
 function ajustarMapaImpressao() {
     if (!map) return;
